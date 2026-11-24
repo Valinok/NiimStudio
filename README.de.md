@@ -203,8 +203,13 @@ Ergebnis: `docs/media/teaser-<lang>.gif` und `fastlane/metadata/android/<locale>
 
 ## <img src="docs/media/icons/heart.svg" width="26" align="top" alt=""> Danksagung
 
-- Druckerprotokoll basierend auf [niimbluelib](https://github.com/MultiMote/niimbluelib) von MultiMote (MIT).
-- Barcodes und QR-Codes: [ZXing](https://github.com/zxing/zxing) · SVG-Darstellung: [AndroidSVG](https://github.com/BigBadaboom/androidsvg) · Symbole: [Material Icons](https://fonts.google.com/icons) (Apache 2.0).
+Öffentliche Repositories, die bei den Änderungen in diesem Fork verwendet wurden:
+
+- [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio) — Upstream-Projekt, auf dem dieser Fork basiert.
+- [MultiMote/niimbluelib](https://github.com/MultiMote/niimbluelib) — Druckerprotokoll (MIT).
+- [ZXing](https://github.com/zxing/zxing) — Barcodes und QR-Codes.
+- [BigBadaboom/androidsvg](https://github.com/BigBadaboom/androidsvg) — SVG-Darstellung.
+- [google/material-design-icons](https://github.com/google/material-design-icons) — Material-Symbole und -Icons (Apache 2.0).
 
 Alle Lizenzen stehen in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 

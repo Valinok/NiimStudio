@@ -205,7 +205,12 @@ python tools/readme/make_assets.py                 # баннер, иконки,
 
 ## <img src="docs/media/icons/heart.svg" width="26" align="top" alt=""> Благодарности
 
-- Протокол принтера основан на [niimbluelib](https://github.com/MultiMote/niimbluelib) от MultiMote (MIT).
-- Штрихкоды и QR-коды: [ZXing](https://github.com/zxing/zxing) · рендеринг SVG: [AndroidSVG](https://github.com/BigBadaboom/androidsvg) · символы: [Material Icons](https://fonts.google.com/icons) (Apache 2.0).
+Публичные репозитории, которые использовались при правках в этом форке:
+
+- [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio) — upstream-проект, на котором основан форк.
+- [MultiMote/niimbluelib](https://github.com/MultiMote/niimbluelib) — протокол принтера (MIT).
+- [ZXing](https://github.com/zxing/zxing) — штрихкоды и QR-коды.
+- [BigBadaboom/androidsvg](https://github.com/BigBadaboom/androidsvg) — рендеринг SVG.
+- [google/material-design-icons](https://github.com/google/material-design-icons) — символы и иконки Material (Apache 2.0).
 
 Все лицензии перечислены в [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
