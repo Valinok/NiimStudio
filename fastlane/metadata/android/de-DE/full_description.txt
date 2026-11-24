@@ -9,9 +9,9 @@
 <li><b>Profile und Vorlagen:</b> editierbare Etikettengrößen, Layouts als Vorlage mit Vorschaubild speichern.</li>
 <li><b>Serien drucken:</b> Platzhalter aus einer Liste oder CSV füllen oder Etiketten automatisch nummerieren.</li>
 <li><b>Privat:</b> läuft komplett offline und fordert nicht einmal die Internet-Berechtigung an.</li>
-<li>Deutsch und Englisch.</li>
+<li>Deutsch, Englisch und Russisch.</li>
 </ul>
 
-<p><b>Unterstützte Drucker:</b> NIIMBOT B18 (getestet). Andere NIIMBOT-Modelle mit demselben Protokoll funktionieren möglicherweise.</p>
+<p><b>Unterstützte Drucker:</b> NIIMBOT B18 (im upstream getestet), NIIMBOT D110_M (in diesem Fork getestet). Andere NIIMBOT-Modelle mit demselben Protokoll funktionieren möglicherweise.</p>
 
 <p>Das Druckerprotokoll basiert auf niimbluelib (MIT). NiimStudio ist ein unabhängiges Projekt und steht in keiner Verbindung zu NIIMBOT.</p>

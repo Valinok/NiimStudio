@@ -1,0 +1,1 @@
+0.7.1: Russian UI, bottom panel stays stable with the keyboard open, Bluetooth/printing and cancel fixes. Proprietary fonts and traced icons removed.

@@ -2,6 +2,8 @@
   <img src="docs/media/flags/gb.svg" height="14" alt=""> <b>English</b>
   &nbsp;·&nbsp;
   <a href="README.de.md"><img src="docs/media/flags/de.svg" height="14" alt=""> Deutsch</a>
+  &nbsp;·&nbsp;
+  <a href="README.ru.md"><img src="docs/media/flags/ru.svg" height="14" alt=""> Русский</a>
 </p>
 
 > **Fork notice.** This is an experimental fork of [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio)
@@ -49,7 +51,7 @@
 - **Profiles & templates** – editable label sizes, and layouts saved as templates with a preview.
 - **Batch printing** – fill placeholders from a list or CSV, or number labels automatically.
 - **Private by design** – works fully offline, no account, not even the internet permission.
-- **Your language** – English and German, easy to add more.
+- **Your language** – English, German and Russian, easy to add more.
 
 ## <img src="docs/media/icons/screens.svg" width="26" align="top" alt=""> Screenshots
 
@@ -108,7 +110,8 @@ the app is published.
 
 | Printer | Status |
 |---|---|
-| **NIIMBOT B18** | ✅ tested |
+| **NIIMBOT B18** | ✅ tested in upstream |
+| **NIIMBOT D110_M** | ✅ tested in this fork (Legacy/D110 variant, 203 dpi, density 1–5) |
 | Other NIIMBOT models | probably work if they use the same protocol – untested, [feedback welcome](https://github.com/Valinok/NiimStudio/issues) |
 
 ## <img src="docs/media/icons/install.svg" width="26" align="top" alt=""> First print in one minute

@@ -2,6 +2,8 @@
   <a href="README.md"><img src="docs/media/flags/gb.svg" height="14" alt=""> English</a>
   &nbsp;·&nbsp;
   <img src="docs/media/flags/de.svg" height="14" alt=""> <b>Deutsch</b>
+  &nbsp;·&nbsp;
+  <a href="README.ru.md"><img src="docs/media/flags/ru.svg" height="14" alt=""> Русский</a>
 </p>
 
 > **Fork-Hinweis.** Dies ist ein experimenteller Fork von [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio)
@@ -49,7 +51,7 @@
 - **Profile & Vorlagen** – editierbare Etikettengrößen, Layouts als Vorlage mit Vorschaubild speichern.
 - **Serien drucken** – Platzhalter aus einer Liste oder CSV füllen oder Etiketten automatisch nummerieren.
 - **Privat** – läuft komplett offline, kein Konto, nicht einmal eine Internet-Berechtigung.
-- **Deine Sprache** – Deutsch und Englisch, weitere Sprachen lassen sich leicht ergänzen.
+- **Deine Sprache** – Deutsch, Englisch und Russisch, weitere Sprachen lassen sich leicht ergänzen.
 
 ## <img src="docs/media/icons/screens.svg" width="26" align="top" alt=""> Screenshots
 
@@ -108,7 +110,8 @@ sobald die App veröffentlicht ist.
 
 | Drucker | Status |
 |---|---|
-| **NIIMBOT B18** | ✅ getestet |
+| **NIIMBOT B18** | ✅ im upstream getestet |
+| **NIIMBOT D110_M** | ✅ in diesem Fork getestet (Variante Legacy/D110, 203 dpi, Dichte 1–5) |
 | Andere NIIMBOT-Modelle | funktionieren wahrscheinlich, wenn sie dasselbe Protokoll sprechen – ungetestet, [Rückmeldung willkommen](https://github.com/Valinok/NiimStudio/issues) |
 
 ## <img src="docs/media/icons/install.svg" width="26" align="top" alt=""> Erster Druck in einer Minute

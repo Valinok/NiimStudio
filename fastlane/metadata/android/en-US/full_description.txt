@@ -9,9 +9,9 @@
 <li><b>Profiles and templates:</b> editable label sizes, layouts saved as templates with a preview.</li>
 <li><b>Batch printing:</b> fill placeholders from a list or CSV, or number labels automatically.</li>
 <li><b>Private by design:</b> works fully offline and does not even request the internet permission.</li>
-<li>English and German.</li>
+<li>English, German and Russian.</li>
 </ul>
 
-<p><b>Supported printers:</b> NIIMBOT B18 (tested). Other NIIMBOT models that use the same protocol may work.</p>
+<p><b>Supported printers:</b> NIIMBOT B18 (tested upstream), NIIMBOT D110_M (tested in this fork). Other NIIMBOT models that use the same protocol may work.</p>
 
 <p>The printer protocol is based on niimbluelib (MIT). NiimStudio is an independent project and is not affiliated with NIIMBOT.</p>
