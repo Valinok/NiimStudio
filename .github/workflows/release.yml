@@ -27,6 +27,9 @@ env:
 
 jobs:
   release:
+    # The upstream action needs signing secrets that are not available in this fork.
+    # Releases here are built and published manually; see README.md.
+    if: github.repository == 'TobseF/NiimStudio'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
