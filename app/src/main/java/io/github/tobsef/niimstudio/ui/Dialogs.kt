@@ -65,12 +65,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tobsef.niimstudio.data.Store
+import io.github.tobsef.niimstudio.model.DataMode
 import io.github.tobsef.niimstudio.model.TextEl
 import io.github.tobsef.niimstudio.printer.ConnState
 import io.github.tobsef.niimstudio.printer.PrinterManager
 import io.github.tobsef.niimstudio.protocol.ImageEncoder
 import io.github.tobsef.niimstudio.protocol.PrintOptions
 import io.github.tobsef.niimstudio.protocol.PrintVariant
+import io.github.tobsef.niimstudio.protocol.autoPrintVariant
 import io.github.tobsef.niimstudio.render.DataVars
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
@@ -152,10 +154,13 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
     val conn by PrinterManager.state.collectAsState()
     val progress by PrinterManager.printing.collectAsState()
     val doc = vm.doc
-    val pages = DataVars.count(doc.data)
+    val isCounter = doc.data.mode == DataMode.COUNTER
+    // Counter mode prints the currently previewed number, not a fixed 1..N batch.
+    val pages = if (isCounter) 1 else DataVars.count(doc.data)
     var copies by remember { mutableIntStateOf(1) }
     var density by remember { mutableIntStateOf(if (doc.profile.density > 0) doc.profile.density else settings.density) }
-    var row by remember { mutableIntStateOf(vm.previewRow.coerceIn(0, pages - 1)) }
+    val row = vm.previewRow
+    val number = vm.currentNumber()
     var error by remember { mutableStateOf<String?>(null) }
     var preparing by remember { mutableStateOf(false) }
     var finished by remember { mutableStateOf(false) }
@@ -194,12 +199,21 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                     )
                 } ?: Box(Modifier.height(80.dp))
             }
-            if (pages > 1) {
+            if (isCounter) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.preview_label), Modifier.weight(1f))
-                    RepeatButton(Icons.Filled.ChevronLeft, stringResource(R.string.previous), { row = (row - 1).coerceAtLeast(0) })
+                    RepeatButton(Icons.Filled.ChevronLeft, stringResource(R.string.previous), { vm.setPreviewRowIndex(vm.previewRow - 1) })
+                    Text(number.toString(), fontSize = 15.sp)
+                    RepeatButton(Icons.Filled.ChevronRight, stringResource(R.string.next), { vm.setPreviewRowIndex(vm.previewRow + 1) })
+                }
+                CurrentNumberField(number, vm::setCurrentNumber, Modifier.padding(top = 6.dp))
+                Text(stringResource(R.string.counter_auto_hint), Modifier.padding(top = 4.dp), color = AppColors.TextGrey, fontSize = 13.sp)
+            } else if (pages > 1) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.preview_label), Modifier.weight(1f))
+                    RepeatButton(Icons.Filled.ChevronLeft, stringResource(R.string.previous), { vm.setPreviewRowIndex(vm.previewRow - 1) })
                     Text("${row + 1} / $pages")
-                    RepeatButton(Icons.Filled.ChevronRight, stringResource(R.string.next), { row = (row + 1).coerceAtMost(pages - 1) })
+                    RepeatButton(Icons.Filled.ChevronRight, stringResource(R.string.next), { vm.setPreviewRowIndex(vm.previewRow + 1) })
                 }
             }
 
@@ -255,11 +269,12 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                                         return@launch
                                     }
                                     val images = withContext(Dispatchers.Default) {
-                                        (0 until pages).map { ImageEncoder.encode(Renderer.printImage(doc, settings, it)) }
+                                        if (isCounter) listOf(ImageEncoder.encode(Renderer.printImage(doc, settings, row)))
+                                        else (0 until pages).map { ImageEncoder.encode(Renderer.printImage(doc, settings, it)) }
                                     }
                                     val info = PrinterManager.info
                                     val variant = settings.variant?.let { v -> PrintVariant.entries.firstOrNull { it.name == v } }
-                                        ?: if ((info?.protocolVersion ?: 0) >= 4) PrintVariant.V4 else PrintVariant.V3
+                                        ?: autoPrintVariant(info)
                                     val opts = PrintOptions(
                                         density = density,
                                         labelType = doc.profile.labelType,
@@ -269,7 +284,12 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                                         useIndexedRows = settings.indexedRows,
                                     )
                                     PrinterManager.print(images, opts) { err ->
-                                        if (err != null) error = ctx.getString(R.string.print_failed, errorText(ctx, err)) else finished = true
+                                        if (err != null) {
+                                            error = ctx.getString(R.string.print_failed, errorText(ctx, err))
+                                        } else {
+                                            finished = true
+                                            if (isCounter) vm.advanceCounter()
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     error = errorText(ctx, e)

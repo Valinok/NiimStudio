@@ -98,6 +98,8 @@
     <string name="counter_count">Количество этикеток</string>
     <string name="counter_digits">Разряды (ведущие нули)</string>
     <string name="counter_hint">Используйте заполнитель {N} в тексте, штрих-коде или QR-коде.</string>
+    <string name="counter_current">Текущий номер</string>
+    <string name="counter_auto_hint">Просмотр без ограничения. После печати номер увеличивается на 1 и сохраняется при выходе.</string>
     <string name="preview_label">Предпросмотр этикетки</string>
     <string name="insert_variable">Вставить:</string>
     <string name="content">Содержание</string>

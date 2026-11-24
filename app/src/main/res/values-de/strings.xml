@@ -97,6 +97,8 @@
     <string name="counter_count">Anzahl Etiketten</string>
     <string name="counter_digits">Stellen (führende Nullen)</string>
     <string name="counter_hint">Platzhalter {N} in Text, Barcode oder QR-Code verwenden.</string>
+    <string name="counter_current">Aktuelle Nummer</string>
+    <string name="counter_auto_hint">Die Vorschau ist unbegrenzt. Nach dem Drucken erhöht sich die Nummer um 1 und wird beim Beenden gespeichert.</string>
     <string name="preview_label">Vorschau Etikett</string>
     <string name="insert_variable">Einfügen:</string>
     <string name="content">Inhalt</string>

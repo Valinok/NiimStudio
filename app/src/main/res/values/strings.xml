@@ -98,6 +98,8 @@
     <string name="counter_count">Number of labels</string>
     <string name="counter_digits">Digits (leading zeros)</string>
     <string name="counter_hint">Use the placeholder {N} in a text, barcode or QR code.</string>
+    <string name="counter_current">Current number</string>
+    <string name="counter_auto_hint">Preview is unlimited. After printing, the number increases by 1 and is saved on exit.</string>
     <string name="preview_label">Preview label</string>
     <string name="insert_variable">Insert:</string>
     <string name="content">Content</string>

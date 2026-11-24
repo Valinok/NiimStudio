@@ -77,6 +77,7 @@ import io.github.tobsef.niimstudio.printer.PrinterManager
 import io.github.tobsef.niimstudio.protocol.ImageEncoder
 import io.github.tobsef.niimstudio.protocol.PrintOptions
 import io.github.tobsef.niimstudio.protocol.PrintVariant
+import io.github.tobsef.niimstudio.protocol.autoPrintVariant
 import io.github.tobsef.niimstudio.protocol.PrinterInfo
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
@@ -315,8 +316,7 @@ private suspend fun printTestPattern(ctx: android.content.Context): String {
     val img = withContext(Dispatchers.Default) { ImageEncoder.encode(Renderer.printImage(doc, s, 0)) }
     val info = PrinterManager.info
     val variant = s.variant?.let { v -> PrintVariant.entries.firstOrNull { it.name == v } }
-        ?: if (info?.modelId == 2320) PrintVariant.LEGACY
-        else if ((info?.protocolVersion ?: 0) >= 4) PrintVariant.V4 else PrintVariant.V3
+        ?: autoPrintVariant(info)
     PrinterManager.print(listOf(img), PrintOptions(density = s.density, labelType = p.labelType, variant = variant, printheadPixels = s.printheadDots, useIndexedRows = s.indexedRows))
     return ctx.getString(R.string.test_pattern_sent, p.name, variant.name)
 }

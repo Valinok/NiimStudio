@@ -10,6 +10,13 @@ class ProtocolTest {
     private fun hex(s: String) = s.split(" ").filter { it.isNotEmpty() }.map { it.toInt(16).toByte() }.toByteArray()
 
     @Test
+    fun autoVariantUsesLegacyForD110M() {
+        assertEquals(PrintVariant.LEGACY, autoPrintVariant(PrinterInfo(modelId = 2320, protocolVersion = 5)))
+        assertEquals(PrintVariant.V4, autoPrintVariant(PrinterInfo(protocolVersion = 4)))
+        assertEquals(PrintVariant.V3, autoPrintVariant(null))
+    }
+
+    @Test
     fun heartbeatPacketEncoding() {
         // 55 55 DC 01 01 XOR(DC,01,01)=DC AA AA
         assertArrayEquals(hex("55 55 DC 01 01 DC AA AA"), NiimbotPacket(Cmd.HEARTBEAT, byteArrayOf(1)).toBytes())

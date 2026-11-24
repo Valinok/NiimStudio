@@ -13,7 +13,12 @@ enum class PrintVariant {
     /** PrintStart 7 bytes, SetPageSize 6 bytes (rows, cols, copies). Used by B1-family v3 printers. */
     V3,
 
-    /** PrintStart 1 byte, PrintClear, SetPageSize 4 bytes, PrintQuantity. Used by D110 / older printers. */
+    /**
+     * D110_M (modelId 2320), verified against the official app's HCI capture:
+     * PrintStart 9 bytes, SetPageSize 13 bytes (rows, cols, copies), no PageStart and
+     * no PrintQuantity. Copies are sent in SetPageSize; sending a separate quantity
+     * command makes D110_M print endlessly.
+     */
     LEGACY,
 
     /** PrintStart 9 bytes, SetPageSize 13 bytes, no PageStart. Used by protocol v4/v5 printers. */
@@ -30,6 +35,13 @@ data class PrintOptions(
     val useIndexedRows: Boolean = true,
     val statusTimeoutMs: Long = 60_000,
 )
+
+/** Variant implied by the connected printer; D110_M must never use the generic v3/v4 path. */
+fun autoPrintVariant(info: PrinterInfo?): PrintVariant = when {
+    info?.modelId == 2320 -> PrintVariant.LEGACY
+    (info?.protocolVersion ?: 0) >= 4 -> PrintVariant.V4
+    else -> PrintVariant.V3
+}
 
 enum class PrintStage { STARTING, PREPARING, SENDING, PRINTING, DONE, CANCELLED }
 
@@ -56,6 +68,14 @@ class PrintJob(
     suspend fun print(pages: List<EncodedImage>, o: PrintOptions) {
         require(pages.isNotEmpty())
         val total = pages.size * o.copies
+        // D110_M prints the whole run as one hardware transaction when copies are set in
+        // SetPageSize. Repeating single-copy pages is the documented alternative and avoids
+        // the endless-copy bug, while still supporting multi-page (CSV) jobs.
+        val jobs = if (o.variant == PrintVariant.LEGACY) {
+            (0 until o.copies).flatMap { pages }
+        } else {
+            pages
+        }
         log("Print: ${pages.size} page(s) × ${o.copies}, variant=${o.variant}, ${pages[0].cols}x${pages[0].rows} px")
         var ok = false
         var done = 0
@@ -70,9 +90,10 @@ class PrintJob(
                     check("PrintStart", client.printStart(u16(total) + byteArrayOf(0, 0, 0, 0, 0)))
                 }
                 PrintVariant.LEGACY -> {
-                    check("SetDensity", client.setDensity(o.density))
                     check("SetLabelType", client.setLabelType(o.labelType))
-                    check("PrintStart", client.printStart(byteArrayOf(1)))
+                    check("SetDensity", client.setDensity(o.density))
+                    // D110_M: u16 totalPages + 00 00 00 00 00 01 00 (HCI capture of the official app).
+                    check("PrintStart", client.printStart(u16(total) + byteArrayOf(0, 0, 0, 0, 0, 1, 0)))
                 }
                 PrintVariant.V4 -> {
                     check("SetLabelType", client.setLabelType(o.labelType))
@@ -82,7 +103,7 @@ class PrintJob(
                 }
             }
 
-            pages.forEachIndexed { index, img ->
+            jobs.forEachIndexed { index, img ->
                 val rows = ImageEncoder.rowPackets(img, o.printheadPixels, o.useIndexedRows)
                 when (o.variant) {
                     PrintVariant.V3 -> {
@@ -90,10 +111,12 @@ class PrintJob(
                         check("SetPageSize", client.setPageSize(u16(img.rows) + u16(img.cols) + u16(o.copies)))
                     }
                     PrintVariant.LEGACY -> {
-                        soft("PrintClear") { client.printClear() }
-                        check("PageStart", client.pageStart())
-                        check("SetPageSize", client.setPageSize(u16(img.rows) + u16(img.cols)))
-                        check("PrintQuantity", client.setQuantity(o.copies))
+                        // D110_M: rows, cols, copies=1 + seven reserved bytes.
+                        // Never send PrintClear/PageStart/PrintQuantity on this model.
+                        check(
+                            "SetPageSize",
+                            client.setPageSize(u16(img.rows) + u16(img.cols) + u16(1) + ByteArray(7)),
+                        )
                     }
                     PrintVariant.V4 -> check(
                         "SetPageSize",
@@ -102,10 +125,10 @@ class PrintJob(
                 }
                 rows.forEachIndexed { i, p ->
                     client.sendOneWay(p)
-                    if (i % 16 == 0) report(PrintStage.SENDING, 0.5f * i / rows.size, index + 1, pages.size)
+                    if (i % 16 == 0) report(PrintStage.SENDING, 0.5f * i / rows.size, index + 1, jobs.size)
                 }
                 check("PageEnd", client.pageEnd())
-                done += o.copies
+                done += if (o.variant == PrintVariant.LEGACY) 1 else o.copies
                 waitForPages(done, total, o)
             }
             ok = true
@@ -153,13 +176,5 @@ class PrintJob(
     private fun check(step: String, ok: Boolean) {
         log("$step -> ${if (ok) "OK" else "REFUSED"}")
         if (!ok) throw PrinterException("$step refused by printer")
-    }
-
-    private suspend fun soft(step: String, block: suspend () -> Boolean) {
-        try {
-            log("$step -> ${block()}")
-        } catch (e: Exception) {
-            log("$step ignored: ${e.message}")
-        }
     }
 }

@@ -44,6 +44,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -63,6 +64,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +86,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -384,6 +387,26 @@ fun DocThumbnail(t: Template) {
 
 // ====================================================================== Data source
 
+/** Number input that allows an empty intermediate value while typing. */
+@Composable
+fun CurrentNumberField(value: Int, onValue: (Int) -> Unit, modifier: Modifier = Modifier) {
+    var text by remember { mutableStateOf(value.toString()) }
+    LaunchedEffect(value) {
+        if (text.toIntOrNull() != value) text = value.toString()
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { v ->
+            text = v
+            v.toIntOrNull()?.let(onValue)
+        },
+        modifier = modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.counter_current)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+    )
+}
+
 @Composable
 private fun DataPanel(vm: EditorViewModel) {
     val ctx = LocalContext.current
@@ -431,20 +454,23 @@ private fun DataPanel(vm: EditorViewModel) {
             }
             DataMode.COUNTER -> {
                 Group(Modifier.padding(top = 10.dp)) {
-                    StepperRow(stringResource(R.string.counter_start), ds.counterStart.toFloat(), 1f, { v -> vm.updateData { it.copy(counterStart = v.toInt()) } }, format = { it.toInt().toString() })
+                    CurrentNumberField(vm.currentNumber(), vm::setCurrentNumber)
                     StepperRow(stringResource(R.string.counter_step), ds.counterStep.toFloat(), 1f, { v -> vm.updateData { it.copy(counterStep = v.toInt()) } }, format = { it.toInt().toString() })
-                    StepperRow(stringResource(R.string.counter_count), ds.counterCount.toFloat(), 1f, { v -> vm.updateData { it.copy(counterCount = v.toInt()) } }, min = 1f, max = 9999f, format = { it.toInt().toString() })
                     StepperRow(stringResource(R.string.counter_digits), ds.counterDigits.toFloat(), 1f, { v -> vm.updateData { it.copy(counterDigits = v.toInt()) } }, min = 0f, max = 12f, format = { it.toInt().toString() })
                 }
                 Text(stringResource(R.string.counter_hint), Modifier.padding(top = 8.dp), color = AppColors.TextGrey, fontSize = 13.sp)
+                Text(stringResource(R.string.counter_auto_hint), Modifier.padding(top = 4.dp), color = AppColors.TextGrey, fontSize = 13.sp)
             }
         }
         if (ds.mode != DataMode.NONE) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.preview_label), Modifier.weight(1f), fontSize = 15.sp)
-                RepeatButton(Icons.Filled.ChevronLeft, stringResource(R.string.previous), { vm.previewRow = (vm.previewRow - 1).coerceAtLeast(0) })
-                Text("${vm.previewRow + 1} / $count", fontSize = 15.sp)
-                RepeatButton(Icons.Filled.ChevronRight, stringResource(R.string.next), { vm.previewRow = (vm.previewRow + 1).coerceAtMost(count - 1) })
+                RepeatButton(Icons.Filled.ChevronLeft, stringResource(R.string.previous), { vm.setPreviewRowIndex(vm.previewRow - 1) })
+                Text(
+                    if (ds.mode == DataMode.COUNTER) vm.currentNumber().toString() else "${vm.previewRow + 1} / $count",
+                    fontSize = 15.sp,
+                )
+                RepeatButton(Icons.Filled.ChevronRight, stringResource(R.string.next), { vm.setPreviewRowIndex(vm.previewRow + 1) })
             }
         }
     }

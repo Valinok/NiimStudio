@@ -24,6 +24,13 @@ class DataVarsTest {
     }
 
     @Test
+    fun counterPreviewIsNotLimitedByLabelCount() {
+        val ds = DataSource(mode = DataMode.COUNTER, counterStart = 5, counterStep = 1, counterCount = 2)
+        assertEquals("12", DataVars.apply("{N}", DataVars.vars(ds, 7)))
+        assertEquals("4", DataVars.apply("{N}", DataVars.vars(ds, -1)))
+    }
+
+    @Test
     fun noneModeLeavesPlaceholders() {
         val ds = DataSource()
         assertEquals(1, DataVars.count(ds))

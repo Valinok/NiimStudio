@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.tobsef.niimstudio.data.Store
+import io.github.tobsef.niimstudio.model.DataMode
 import io.github.tobsef.niimstudio.model.BarcodeEl
 import io.github.tobsef.niimstudio.model.ConnectorEl
 import io.github.tobsef.niimstudio.model.DateEl
@@ -27,6 +28,7 @@ import io.github.tobsef.niimstudio.model.Template
 import io.github.tobsef.niimstudio.model.TextEl
 import io.github.tobsef.niimstudio.model.TextStyle
 import io.github.tobsef.niimstudio.model.newId
+import io.github.tobsef.niimstudio.render.DataVars
 import io.github.tobsef.niimstudio.render.MM_PER_PT
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
@@ -480,7 +482,44 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateData(transform: (io.github.tobsef.niimstudio.model.DataSource) -> io.github.tobsef.niimstudio.model.DataSource) {
         update(doc.copy(data = transform(doc.data)), merge = "data")
-        previewRow = previewRow.coerceIn(0, io.github.tobsef.niimstudio.render.DataVars.count(doc.data) - 1)
+        // Counter preview is an unbounded offset from the current number, not a page index.
+        if (doc.data.mode != DataMode.COUNTER) {
+            previewRow = previewRow.coerceIn(0, (DataVars.count(doc.data) - 1).coerceAtLeast(0))
+        }
+    }
+
+    /** Moves the previewed data row. Counter mode deliberately has no upper limit. */
+    fun setPreviewRowIndex(row: Int) {
+        previewRow = if (doc.data.mode == DataMode.COUNTER) row
+        else row.coerceIn(0, (DataVars.count(doc.data) - 1).coerceAtLeast(0))
+    }
+
+    /** The number rendered by {N} for the currently previewed label. */
+    fun currentNumber(): Int = doc.data.counterStart + previewRow * doc.data.counterStep
+
+    /** Sets the running number directly and keeps it across restarts. */
+    fun setCurrentNumber(value: Int) {
+        if (doc.data.mode != DataMode.COUNTER) return
+        update(doc.copy(data = doc.data.copy(counterStart = value)), merge = "data")
+        previewRow = 0
+        flushDraft()
+    }
+
+    /** Called after a successful print: current number +1, saved immediately. */
+    fun advanceCounter() {
+        if (doc.data.mode != DataMode.COUNTER) return
+        // The print callback arrives on a background coroutine; mutate Compose state on Main.
+        viewModelScope.launch(Dispatchers.Main.immediate) {
+            val next = currentNumber() + 1
+            update(doc.copy(data = doc.data.copy(counterStart = next)), merge = "data")
+            previewRow = 0
+            flushDraft()
+        }
+    }
+
+    private fun flushDraft() {
+        val d = doc
+        viewModelScope.launch(Dispatchers.IO) { Store.saveDraft(d) }
     }
 
     // ------------------------------------------------------------------ templates

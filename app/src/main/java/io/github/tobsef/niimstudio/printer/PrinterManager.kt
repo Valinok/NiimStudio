@@ -49,6 +49,10 @@ sealed class ConnState {
     data class Failed(val reason: FailReason, val detail: String? = null) : ConnState()
 }
 
+private const val HEARTBEAT_INTERVAL_MS = 1_000L
+private const val HEARTBEAT_TIMEOUT_MS = 1_000L
+private const val HEARTBEAT_FAILURES_TO_DISCONNECT = 2
+
 /** App-wide printer connection, keep-alive and print execution. */
 @SuppressLint("MissingPermission")
 object PrinterManager {
@@ -146,6 +150,9 @@ object PrinterManager {
                 if (client === c) {
                     client = null
                     heartbeatJob?.cancel()
+                    // A powered-off printer must not leave a stuck progress dialog behind.
+                    printJob?.cancel()
+                    _printing.value = null
                     _state.value = ConnState.Disconnected
                 }
             }
@@ -169,6 +176,8 @@ object PrinterManager {
 
     private fun closeClient() {
         heartbeatJob?.cancel()
+        printJob?.cancel()
+        _printing.value = null
         client?.let {
             log("Disconnect")
             it.close()
@@ -182,16 +191,18 @@ object PrinterManager {
         heartbeatJob = scope.launch {
             var failures = 0
             while (isActive) {
-                delay(5_000)
+                delay(HEARTBEAT_INTERVAL_MS)
                 if (!Store.settings.value.keepAlive || _printing.value != null || client !== c) continue
                 try {
-                    c.heartbeat()
+                    c.heartbeat(HEARTBEAT_TIMEOUT_MS)
                     failures = 0
                 } catch (e: Exception) {
-                    if (++failures <= 3) log("Heartbeat failed: ${e.message}")
-                    else {
+                    if (++failures < HEARTBEAT_FAILURES_TO_DISCONNECT) {
+                        log("Heartbeat failed: ${e.message}")
+                    } else {
                         log("Printer not responding, disconnecting: ${e.message}")
-                        closeClient() // otherwise the UI keeps showing a dead connection
+                        // One retry at 1 s intervals is enough: the UI must not keep a dead connection.
+                        closeClient()
                         break
                     }
                 }

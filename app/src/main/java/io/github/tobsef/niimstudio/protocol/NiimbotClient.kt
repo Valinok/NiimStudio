@@ -174,10 +174,10 @@ class NiimbotClient(private val transport: Transport, private val log: (String) 
     private fun versionString(d: ByteArray): String =
         if (d.size >= 2) "%d.%02d".format(d.u(0), d.u(1)) else d.toHex()
 
-    suspend fun heartbeat(): NiimbotPacket = request(
+    suspend fun heartbeat(timeoutMs: Long = 1_500): NiimbotPacket = request(
         NiimbotPacket(Cmd.HEARTBEAT, byteArrayOf(if (info.protocolVersion >= 3) 4 else 1)),
         setOf(Rsp.HEARTBEAT_ADV1, Rsp.HEARTBEAT_BASIC, Rsp.HEARTBEAT_INFO, Rsp.HEARTBEAT_ADV2),
-        1_500,
+        timeoutMs,
     )
 
     // ---- print primitives ----
