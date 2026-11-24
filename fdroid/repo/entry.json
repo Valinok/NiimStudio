@@ -1,9 +1,9 @@
 {
   "version": 20001,
-  "timestamp": 1795523647425,
+  "timestamp": 1795523741442,
   "index": {
-    "name": "index-v2.bin",
-    "sha256": "271a50c41897b6710fb459d3cfd90b6c0f537d8adbf14de808e22837f62b55d8",
+    "name": "index-v2-data.jar",
+    "sha256": "6ec4519cfdb455fb99cda76d851e9ac81c5a7413a5d7bf3ba9f38ae553eeeeed",
     "size": 3541,
     "numPackages": 1
   }
