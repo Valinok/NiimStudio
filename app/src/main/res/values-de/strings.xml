@@ -2,6 +2,7 @@
 <!-- Deutsch -->
 <resources>
     <string name="ok">OK</string>
+    <string name="done">Fertig</string>
     <string name="cancel">Abbrechen</string>
     <string name="close">Schließen</string>
     <string name="save">Speichern</string>
@@ -267,6 +268,15 @@
     <string name="query_status">Status abfragen</string>
     <string name="test_pattern">Testmuster</string>
     <string name="test_pattern_sent">Testmuster gesendet (%1$s, %2$s)</string>
+    <string name="settings_printer_card">Druckerinformationen</string>
+    <string name="printer_model">Modell</string>
+    <string name="printer_battery">Akku</string>
+    <string name="printer_firmware">Firmware-Version</string>
+    <string name="printer_hardware">Hardware-Version</string>
+    <string name="printer_serial">Seriennummer</string>
+    <string name="printer_protocol">Protokoll</string>
+    <string name="printer_dpi">Auflösung</string>
+    <string name="battery_level">%1$d / 4</string>
     <string name="about_text">Freier Open-Source-Etiketteneditor für NIIMBOT-Etikettendrucker (GPL-3.0). Nicht mit NIIMBOT verbunden. Protokoll basiert auf niimbluelib (MIT), Symbole: Material Icons, Barcodes: ZXing, SVG: AndroidSVG (Apache 2.0).</string>
     <string name="show_all_devices">Alle Geräte anzeigen</string>
     <string name="scanning">Suche läuft…</string>

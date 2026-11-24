@@ -77,6 +77,7 @@ import io.github.tobsef.niimstudio.printer.PrinterManager
 import io.github.tobsef.niimstudio.protocol.ImageEncoder
 import io.github.tobsef.niimstudio.protocol.PrintOptions
 import io.github.tobsef.niimstudio.protocol.PrintVariant
+import io.github.tobsef.niimstudio.protocol.PrinterInfo
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,6 +117,33 @@ private fun NavRow(label: String, value: String? = null, onClick: () -> Unit) {
 }
 
 @Composable
+private fun BatteryIcon(level: Int?, modifier: Modifier = Modifier) {
+    val filledColor = when {
+        level == null -> AppColors.Divider
+        level >= 3 -> AppColors.Ok
+        level == 2 -> AppColors.Orange
+        else -> AppColors.Accent
+    }
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+        repeat(4) { index ->
+            Box(
+                Modifier.size(width = 4.dp, height = 16.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(if (level != null && index < level) filledColor else AppColors.Divider),
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = AppColors.TextGrey, fontSize = 13.sp)
+        Text(value, Modifier.padding(start = 12.dp), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
 fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: () -> Unit, requestPermissions: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -147,7 +175,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                         Text(s.deviceName ?: stringResource(R.string.conn_no_printer), fontSize = 16.sp, fontWeight = FontWeight.Medium)
                         Text(
                             when (val c = conn) {
-                                is ConnState.Connected -> stringResource(R.string.settings_connected_info, c.info.toString())
+                                is ConnState.Connected -> stringResource(R.string.settings_connected_info, printerSummary(c.info))
                                 is ConnState.Connecting -> stringResource(R.string.settings_connecting)
                                 is ConnState.Failed -> failText(c)
                                 ConnState.Disconnected -> s.deviceAddress ?: stringResource(R.string.settings_tap_search)
@@ -172,6 +200,27 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                 Segmented(listOf(TransportKind.SPP to stringResource(R.string.transport_spp), TransportKind.BLE to "Bluetooth LE"), s.transport, { v -> Store.updateSettings { it.copy(transport = v) } })
                 SwitchRow(stringResource(R.string.auto_connect), s.autoConnect, { v -> Store.updateSettings { it.copy(autoConnect = v) } })
                 SwitchRow(stringResource(R.string.keep_alive), s.keepAlive, { v -> Store.updateSettings { it.copy(keepAlive = v) } })
+            }
+
+            val currentConn = conn
+            if (currentConn is ConnState.Connected) {
+                val info: PrinterInfo = currentConn.info
+                Card(stringResource(R.string.settings_printer_card)) {
+                    InfoRow(stringResource(R.string.printer_model), printerModelName(info))
+                    printerDpi(info)?.let { InfoRow(stringResource(R.string.printer_dpi), "$it dpi") }
+                    InfoRow(stringResource(R.string.printer_firmware), info.softwareVersion ?: "—")
+                    InfoRow(stringResource(R.string.printer_hardware), info.hardwareVersion ?: "—")
+                    InfoRow(stringResource(R.string.printer_serial), info.serial ?: "—")
+                    InfoRow(stringResource(R.string.printer_protocol), if (info.protocolVersion > 0) "v${info.protocolVersion}" else "—")
+                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.printer_battery), color = AppColors.TextGrey, fontSize = 13.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            BatteryIcon(info.battery)
+                            Spacer(Modifier.width(8.dp))
+                            Text(info.battery?.let { stringResource(R.string.battery_level, it) } ?: "—", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
             }
 
             Card(stringResource(R.string.section_print)) {
@@ -213,7 +262,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
                     OutlinedButton(onClick = {
                         scope.launch {
-                            message = PrinterManager.refreshInfo()?.toString() ?: ctx.getString(R.string.not_connected)
+                            message = PrinterManager.refreshInfo()?.let { printerSummary(it) } ?: ctx.getString(R.string.not_connected)
                         }
                     }) { Text(stringResource(R.string.query_status)) }
                     OutlinedButton(onClick = {
@@ -264,8 +313,10 @@ private suspend fun printTestPattern(ctx: android.content.Context): String {
         ),
     )
     val img = withContext(Dispatchers.Default) { ImageEncoder.encode(Renderer.printImage(doc, s, 0)) }
+    val info = PrinterManager.info
     val variant = s.variant?.let { v -> PrintVariant.entries.firstOrNull { it.name == v } }
-        ?: if ((PrinterManager.info?.protocolVersion ?: 0) >= 4) PrintVariant.V4 else PrintVariant.V3
+        ?: if (info?.modelId == 2320) PrintVariant.LEGACY
+        else if ((info?.protocolVersion ?: 0) >= 4) PrintVariant.V4 else PrintVariant.V3
     PrinterManager.print(listOf(img), PrintOptions(density = s.density, labelType = p.labelType, variant = variant, printheadPixels = s.printheadDots, useIndexedRows = s.indexedRows))
     return ctx.getString(R.string.test_pattern_sent, p.name, variant.name)
 }

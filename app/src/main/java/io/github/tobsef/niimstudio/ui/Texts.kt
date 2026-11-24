@@ -12,6 +12,7 @@ import io.github.tobsef.niimstudio.protocol.PrintProgress
 import io.github.tobsef.niimstudio.protocol.PrintStage
 import io.github.tobsef.niimstudio.protocol.PrintVariant
 import io.github.tobsef.niimstudio.protocol.PrinterException
+import io.github.tobsef.niimstudio.protocol.PrinterInfo
 
 /** Localized texts for values coming from the language-neutral printer/protocol layers. */
 
@@ -29,6 +30,24 @@ fun variantRes(v: PrintVariant): Int = when (v) {
     PrintVariant.V3 -> R.string.variant_v3
     PrintVariant.LEGACY -> R.string.variant_legacy
     PrintVariant.V4 -> R.string.variant_v4
+}
+
+/** Human-readable printer model name; D110_M code comes from the original NIIMBOT config. */
+fun printerModelName(info: PrinterInfo): String = when (info.modelId) {
+    2320 -> "D110_M"
+    3584 -> "B18"
+    else -> info.modelId?.let { "ID $it" } ?: "—"
+}
+
+/** D110_M is 203 dpi; other models are reported only when the driver knows their resolution. */
+fun printerDpi(info: PrinterInfo): Int? = if (info.modelId == 2320) 203 else null
+
+/** Compact one-line summary for connection status and diagnostics. */
+fun printerSummary(info: PrinterInfo): String {
+    val parts = mutableListOf(printerModelName(info))
+    info.battery?.let { parts += "BAT $it/4" }
+    info.softwareVersion?.let { parts += "FW $it" }
+    return parts.joinToString(" · ")
 }
 
 @Composable

@@ -69,7 +69,10 @@ object Fonts {
             italic -> Typeface.ITALIC
             else -> Typeface.NORMAL
         }
-        return Typeface.create(base(key), style)
+        // Called for every text on every drag frame; cache the styled Typeface too.
+        // "~" keeps these keys apart from the raw base keys ("sys:"/"file:").
+        val ck = "~$key|$style"
+        return synchronized(cache) { cache.getOrPut(ck) { Typeface.create(base(key), style) } }
     }
 }
 
@@ -87,7 +90,29 @@ object DataVars {
             lines.any { ',' in it } -> ","
             else -> null
         }
-        return lines.map { l -> if (sep == null) listOf(l.trim()) else l.split(sep).map { it.trim().trim('"') } }
+        return lines.map { l -> if (sep == null) listOf(l.trim()) else splitCsv(l, sep[0]) }
+    }
+
+    /** Minimal CSV row split: separators inside "quoted values" are not column breaks. */
+    private fun splitCsv(line: String, sep: Char): List<String> {
+        val out = ArrayList<String>()
+        val sb = StringBuilder()
+        var quoted = false
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            when {
+                c == '"' -> {
+                    if (quoted && i + 1 < line.length && line[i + 1] == '"') { sb.append('"'); i++ }
+                    else quoted = !quoted
+                }
+                c == sep && !quoted -> { out += sb.toString().trim(); sb.setLength(0) }
+                else -> sb.append(c)
+            }
+            i++
+        }
+        out += sb.toString().trim()
+        return out
     }
 
     fun count(ds: DataSource): Int = when (ds.mode) {

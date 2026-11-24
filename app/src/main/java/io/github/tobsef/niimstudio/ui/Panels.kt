@@ -6,15 +6,19 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import io.github.tobsef.niimstudio.R
 import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import com.caverock.androidsvg.RenderOptions
+import com.caverock.androidsvg.SVG
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -71,12 +75,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tobsef.niimstudio.data.Store
@@ -107,10 +116,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 @Composable
-fun BottomPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
+fun BottomPanel(vm: EditorViewModel, modifier: Modifier = Modifier, extraBodyHeight: Dp = 0.dp) {
     val sel = vm.selected
     val tabs = vm.tabsFor(sel)
-    if (vm.tab !in tabs) vm.tab = tabs.first()
+    androidx.compose.runtime.LaunchedEffect(tabs, vm.tab) {
+        if (vm.tab !in tabs) vm.tab = tabs.first()
+    }
     Column(modifier.fillMaxWidth().background(Color.White)) {
         // tab row
         Row(
@@ -163,12 +174,12 @@ fun BottomPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
             }
         }
         if (vm.panelExpanded) {
-            Box(Modifier.fillMaxWidth().height(340.dp)) {
+            Box(Modifier.fillMaxWidth().height(200.dp + extraBodyHeight)) {
                 when (vm.tab) {
                     PanelTab.ADD -> AddPanel(vm)
                     PanelTab.TEMPLATES -> TemplatesPanel(vm)
                     PanelTab.DATA -> DataPanel(vm)
-                    PanelTab.CONTENT -> sel?.let { ContentPanel(vm, it) }
+                    PanelTab.CONTENT -> sel?.let { ContentPanel(vm, it, extraBodyHeight) }
                     PanelTab.STYLE -> sel?.let { StylePanel(vm, it) }
                     PanelTab.FONTS -> sel?.let { FontsPanel(vm, it) }
                     PanelTab.ARRANGE -> sel?.let { ArrangePanel(vm, it) }
@@ -184,6 +195,39 @@ fun BottomPanel(vm: EditorViewModel, modifier: Modifier = Modifier) {
 // ====================================================================== Add
 
 @Composable
+private fun NativeEditorIcon(
+    asset: String,
+    fallback: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+) {
+    val ctx = LocalContext.current
+    val svg = remember(asset) {
+        try {
+            ctx.assets.open("editor_icons/$asset.svg").use { SVG.getFromInputStream(it) }.apply {
+                if (documentViewBox == null) setDocumentViewBox(0f, 0f, documentWidth, documentHeight)
+                // Fill the Compose viewport; fixed px sizes from the SVG would override it.
+                setDocumentWidth("100%")
+                setDocumentHeight("100%")
+            }
+        } catch (e: Exception) {
+            Log.w("NativeEditorIcon", "Cannot load $asset.svg: ${e.message}")
+            null
+        }
+    }
+    if (svg == null) {
+        Icon(fallback, contentDescription, modifier, tint = Color(0xFF222222))
+    } else {
+        Canvas(modifier) {
+            val options = RenderOptions.create().viewPort(0f, 0f, size.width, size.height)
+            synchronized(svg) {
+                drawIntoCanvas { canvas -> svg.renderToCanvas(canvas.nativeCanvas, options) }
+            }
+        }
+    }
+}
+
+@Composable
 private fun AddPanel(vm: EditorViewModel) {
     val ctx = LocalContext.current
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -195,20 +239,20 @@ private fun AddPanel(vm: EditorViewModel) {
             }
         }
     }
-    data class Item(val icon: ImageVector, val label: String, val tag: String, val action: () -> Unit)
+    data class Item(val icon: String, val fallback: ImageVector, val label: String, val tag: String, val action: () -> Unit)
     val bestBeforePrefix = stringResource(R.string.best_before_prefix)
     val items = listOf(
-        Item(Icons.Filled.TextFields, stringResource(R.string.add_text), "add_text") { vm.addText() },
-        Item(Icons.Outlined.Image, stringResource(R.string.add_image), "add_image") { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-        Item(Icons.Outlined.EmojiEmotions, stringResource(R.string.add_symbol), "add_symbol") { vm.symbolPickerForNew = true; vm.tab = PanelTab.SYMBOL },
-        Item(Icons.Filled.Usb, stringResource(R.string.add_connector), "add_connector") { vm.select(null); vm.connectorPickerForNew = true; vm.tab = PanelTab.CONNECTOR },
-        Item(Icons.Outlined.Schedule, stringResource(R.string.add_time), "add_time") { vm.addDate() },
-        Item(Icons.Filled.ViewWeek, stringResource(R.string.add_barcode), "add_barcode") { vm.addBarcode() },
-        Item(Icons.Filled.QrCode2, stringResource(R.string.add_qr), "add_qr") { vm.addQr() },
-        Item(Icons.Outlined.Numbers, stringResource(R.string.add_serial), "add_serial") { vm.addSerial() },
-        Item(Icons.Outlined.CropSquare, stringResource(R.string.add_shape), "add_shape") { vm.addShape(ShapeKind.RECT) },
-        Item(Icons.Filled.HorizontalRule, stringResource(R.string.add_line), "add_line") { vm.addShape(ShapeKind.LINE_H) },
-        Item(Icons.Outlined.CalendarMonth, stringResource(R.string.add_best_before), "add_best_before") {
+        Item("element_icon_text", Icons.Filled.TextFields, stringResource(R.string.add_text), "add_text") { vm.addText() },
+        Item("element_icon_image", Icons.Outlined.Image, stringResource(R.string.add_image), "add_image") { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        Item("element_icon_material", Icons.Outlined.EmojiEmotions, stringResource(R.string.add_symbol), "add_symbol") { vm.select(null); vm.symbolPickerForNew = true; vm.tab = PanelTab.SYMBOL },
+        Item("features_icon_scan", Icons.Filled.Usb, stringResource(R.string.add_connector), "add_connector") { vm.select(null); vm.connectorPickerForNew = true; vm.tab = PanelTab.CONNECTOR },
+        Item("element_icon_date", Icons.Outlined.Schedule, stringResource(R.string.add_time), "add_time") { vm.addDate() },
+        Item("element_icon_barcode", Icons.Filled.ViewWeek, stringResource(R.string.add_barcode), "add_barcode") { vm.addBarcode() },
+        Item("features_icon_advance_qrcode", Icons.Filled.QrCode2, stringResource(R.string.add_qr), "add_qr") { vm.addQr() },
+        Item("element_icon_serial", Icons.Outlined.Numbers, stringResource(R.string.add_serial), "add_serial") { vm.addSerial() },
+        Item("element_icon_table", Icons.Outlined.CropSquare, stringResource(R.string.add_shape), "add_shape") { vm.addShape(ShapeKind.RECT) },
+        Item("element_icon_line", Icons.Filled.HorizontalRule, stringResource(R.string.add_line), "add_line") { vm.addShape(ShapeKind.LINE_H) },
+        Item("features_icon_form", Icons.Outlined.CalendarMonth, stringResource(R.string.add_best_before), "add_best_before") {
             vm.add(
                 DateEl(
                     io.github.tobsef.niimstudio.model.newId(),
@@ -239,7 +283,7 @@ private fun AddPanel(vm: EditorViewModel) {
                         .background(Color.White),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(it2.icon, it2.label, Modifier.size(32.dp), tint = Color(0xFF222222))
+                    NativeEditorIcon(it2.icon, it2.fallback, it2.label, Modifier.size(32.dp))
                 }
                 Text(it2.label, Modifier.padding(top = 6.dp), color = Color(0xFF555555), fontSize = 13.sp, maxLines = 1)
             }
@@ -409,18 +453,58 @@ private fun DataPanel(vm: EditorViewModel) {
 // ====================================================================== Content
 
 @Composable
-private fun ContentPanel(vm: EditorViewModel, e: Element) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp)) {
-        when (e) {
-            is TextEl -> TextContent(vm, e)
-            is DateEl -> DateContent(vm, e)
-            is ImageEl -> ImageContent(vm, e)
-            is SymbolEl -> SymbolContent(vm, e)
-            is BarcodeEl -> BarcodeContent(vm, e)
-            is QrEl -> QrContent(vm, e)
-            is ShapeEl -> ShapeContent(vm, e)
-            is ConnectorEl -> ConnectorContent(vm, e)
+private fun ContentPanel(vm: EditorViewModel, e: Element, extraBodyHeight: Dp = 0.dp) {
+    if (e !is TextEl) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp)) {
+            when (e) {
+                is DateEl -> DateContent(vm, e)
+                is ImageEl -> ImageContent(vm, e)
+                is SymbolEl -> SymbolContent(vm, e)
+                is BarcodeEl -> BarcodeContent(vm, e)
+                is QrEl -> QrContent(vm, e)
+                is ShapeEl -> ShapeContent(vm, e)
+                is ConnectorEl -> ConnectorContent(vm, e)
+                is TextEl -> Unit
+            }
         }
+        return
+    }
+
+    // The field sits at the top of the tab content and never moves when the keyboard
+    // appears. All remaining space below it is available to the controls.
+    val density = LocalDensity.current
+    var fieldHeightPx by remember { mutableStateOf(0) }
+    val fieldHeight = with(density) { fieldHeightPx.toDp() }
+    val fieldTop = 10.dp
+    val controlsTop = fieldTop + fieldHeight + 10.dp
+    val controlsHeight = (200.dp + extraBodyHeight - controlsTop - 4.dp).coerceAtLeast(0.dp)
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(top = controlsTop)
+                .height(controlsHeight)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp),
+        ) {
+            VariableChips(vm) { v -> vm.updateElement(e.id) { (it as TextEl).copy(text = it.text + v) } }
+            SectionLabel(stringResource(R.string.size_mode))
+            FitModeChooser(e.style.fit) { m -> vm.updateElement(e.id) { (it as TextEl).copy(style = it.style.copy(fit = m)) } }
+        }
+        OutlinedTextField(
+            e.text,
+            { v -> vm.updateElement(e.id, "text-${e.id}") { (it as TextEl).copy(text = v) } },
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(start = 14.dp, end = 14.dp, top = fieldTop)
+                .onSizeChanged { fieldHeightPx = it.height }
+                .testTag("content_text"),
+            label = { Text(stringResource(R.string.content_text)) },
+            minLines = 1,
+            maxLines = 1,
+        )
     }
 }
 
@@ -528,8 +612,12 @@ private fun BarcodeContent(vm: EditorViewModel, e: BarcodeEl) {
         Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.content)) }, singleLine = true,
     )
     VariableChips(vm) { v -> vm.updateElement(e.id) { (it as BarcodeEl).copy(content = it.content + v) } }
-    val r = Barcodes.encode(DataVars.apply(e.content, DataVars.vars(vm.doc.data, vm.previewRow)), e.format)
-    if (r is Barcodes.Result.Err) Text("⚠ ${r.msg}", color = AppColors.Accent, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+    val content = DataVars.apply(e.content, DataVars.vars(vm.doc.data, vm.previewRow))
+    // ZXing is too slow to run on every recomposition (which happens on each typed character).
+    val r by produceState<Barcodes.Result?>(null, content, e.format) {
+        value = withContext(Dispatchers.Default) { Barcodes.encode(content, e.format) }
+    }
+    if (r is Barcodes.Result.Err) Text("⚠ ${(r as Barcodes.Result.Err).msg}", color = AppColors.Accent, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
     SectionLabel(stringResource(R.string.code_type))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         for ((k, label) in Barcodes.linear) Pill(label, e.format == k, { vm.updateElement(e.id) { (it as BarcodeEl).copy(format = k) } })
@@ -549,8 +637,11 @@ private fun QrContent(vm: EditorViewModel, e: QrEl) {
         Modifier.fillMaxWidth().testTag("qr_content"), label = { Text(stringResource(R.string.qr_content)) }, minLines = 2,
     )
     VariableChips(vm) { v -> vm.updateElement(e.id) { (it as QrEl).copy(content = it.content + v) } }
-    val r = Barcodes.encode(DataVars.apply(e.content, DataVars.vars(vm.doc.data, vm.previewRow)), e.format, e.ecc)
-    if (r is Barcodes.Result.Err) Text("⚠ ${r.msg}", color = AppColors.Accent, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+    val content = DataVars.apply(e.content, DataVars.vars(vm.doc.data, vm.previewRow))
+    val r by produceState<Barcodes.Result?>(null, content, e.format, e.ecc) {
+        value = withContext(Dispatchers.Default) { Barcodes.encode(content, e.format, e.ecc) }
+    }
+    if (r is Barcodes.Result.Err) Text("⚠ ${(r as Barcodes.Result.Err).msg}", color = AppColors.Accent, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
     Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { wifiOpen = true }) { Icon(Icons.Filled.Wifi, null); Text(" " + stringResource(R.string.qr_wifi)) }
         OutlinedButton(onClick = { vm.updateElement(e.id) { (it as QrEl).copy(content = "https://") } }) { Text("URL") }

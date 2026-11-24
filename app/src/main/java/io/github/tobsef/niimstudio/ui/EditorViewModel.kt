@@ -31,8 +31,10 @@ import io.github.tobsef.niimstudio.render.MM_PER_PT
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 enum class AlignMode { LEFT, HCENTER, RIGHT, TOP, VCENTER, BOTTOM }
 
@@ -45,6 +47,10 @@ enum class PanelTab(@androidx.annotation.StringRes val title: Int) {
 }
 
 private val docTabs = listOf(PanelTab.ADD, PanelTab.TEMPLATES, PanelTab.DATA, PanelTab.LAYOUT)
+
+private const val DRAFT_DEBOUNCE_MS = 600L
+/** Never let continuous typing postpone the draft write for longer than this. */
+private const val DRAFT_MAX_DELAY_MS = 5_000L
 
 class EditorViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -66,8 +72,14 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
     /** Data row shown in the editor and print preview. */
     var previewRow by mutableIntStateOf(0)
 
-    /** Increments to ask the UI to open the text editor for the selection. */
-    var editRequest by mutableIntStateOf(0)
+    /** Element currently being edited inline on the canvas (null = not editing). */
+    var inlineEditId by mutableStateOf<String?>(null)
+
+    /** Ends inline editing and seals the undo merge so the next edit starts a new undo step. */
+    fun endInlineEdit() {
+        inlineEditId = null
+        lastMergeKey = null
+    }
 
     private val undoStack = ArrayDeque<LabelDoc>()
     private val redoStack = ArrayDeque<LabelDoc>()
@@ -78,6 +90,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
     private var lastMergeKey: String? = null
     private var lastMergeTime = 0L
     private var draftJob: Job? = null
+    @Volatile private var draftPendingSince = 0L
 
     val selected: Element? get() = doc.elements.firstOrNull { it.id == selectedId }
 
@@ -122,17 +135,17 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
 
     fun undo() {
         val prev = undoStack.removeLastOrNull() ?: return
+        endInlineEdit() // otherwise the inline field would write its stale text back into the undone doc
         redoStack.addLast(doc)
         doc = prev
-        lastMergeKey = null
         afterHistoryJump()
     }
 
     fun redo() {
         val next = redoStack.removeLastOrNull() ?: return
+        endInlineEdit()
         undoStack.addLast(doc)
         doc = next
-        lastMergeKey = null
         afterHistoryJump()
     }
 
@@ -148,12 +161,23 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun scheduleDraftSave() {
+        val now = System.currentTimeMillis()
+        if (draftPendingSince == 0L) draftPendingSince = now
         draftJob?.cancel()
         val d = doc
+        val wait = minOf(DRAFT_DEBOUNCE_MS, (draftPendingSince + DRAFT_MAX_DELAY_MS - now).coerceAtLeast(0L))
         draftJob = viewModelScope.launch(Dispatchers.IO) {
-            delay(600)
+            delay(wait)
             Store.saveDraft(d)
+            draftPendingSince = 0L
         }
+    }
+
+    /** A delayed save dies with the ViewModel scope; flush the latest doc on teardown. */
+    override fun onCleared() {
+        draftJob?.cancel()
+        runBlocking(Dispatchers.IO + NonCancellable) { Store.saveDraft(doc) }
+        super.onCleared()
     }
 
     // ------------------------------------------------------------------ selection
@@ -443,11 +467,13 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearAll() {
         update(doc.copy(elements = emptyList()))
+        previewRow = 0
         select(null)
     }
 
     fun newLabel() {
         update(LabelDoc(profile = doc.profile))
+        previewRow = 0
         select(null)
         tab = PanelTab.ADD
     }
@@ -469,7 +495,6 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         val id = if (asNew || doc.templateId == null) newId() else doc.templateId!!
         val d = doc.copy(templateId = id, templateName = name)
         Store.saveTemplate(Template(id = id, name = name, doc = d))
-        doc = d
-        scheduleDraftSave()
+        update(d) // goes through history so Redo cannot restore the old template id/name
     }
 }

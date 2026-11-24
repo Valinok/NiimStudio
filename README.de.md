@@ -4,6 +4,13 @@
   <img src="docs/media/flags/de.svg" height="14" alt=""> <b>Deutsch</b>
 </p>
 
+> **Fork-Hinweis.** Dies ist ein experimenteller Fork von [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio)
+> mit russischer Oberfläche, überarbeitetem unterem Editor-Bereich und Drucker-Korrekturen. Teile der
+> Änderungen wurden mit KI-Unterstützung erzeugt („нейрослоп“) und nicht so gründlich geprüft wie
+> upstream — Verwendung auf eigene Gefahr. Proprietäre Microsoft-Schriften und aus der Hersteller-App
+> nachgezeichnete Icons sind **nicht** enthalten; es werden Systemschriften und integrierte Material-Icons
+> verwendet. Releases erscheinen, falls vorhanden, in diesem Fork und nicht upstream.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
@@ -12,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/TobseF/NiimStudio/releases/latest"><img src="https://img.shields.io/github/v/release/TobseF/NiimStudio?style=flat-square&color=F5413D&label=release" alt="Neueste Version"></a>
+  <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://img.shields.io/github/v/release/Valinok/NiimStudio?style=flat-square&color=F5413D&label=release" alt="Neueste Version"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-GPL--3.0-blue?style=flat-square" alt="Lizenz: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Internet-nicht%20n%C3%B6tig-555?style=flat-square" alt="Keine Internet-Berechtigung">
@@ -25,8 +32,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/TobseF/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Bei GitHub herunterladen"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/TobseF/NiimStudio"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Mit Obtainium installieren"></a>
+  <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Bei GitHub herunterladen"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Mit Obtainium installieren"></a>
 </p>
 
 <p align="center">
@@ -62,8 +69,8 @@ NiimStudio läuft ab **Android 8.0** und braucht Bluetooth. Wähle den Weg, der 
 
 | | So geht's | Updates |
 |---|---|---|
-| **GitHub Releases** | `NiimStudio-<version>-release.apk` aus dem [neuesten Release](https://github.com/TobseF/NiimStudio/releases/latest) laden und öffnen. | manuell |
-| **Obtainium** | NiimStudio mit einem Tipp [zu Obtainium hinzufügen](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/TobseF/NiimStudio). | automatisch |
+| **GitHub Releases** | `NiimStudio-<version>-release.apk` aus dem [neuesten Release](https://github.com/Valinok/NiimStudio/releases/latest) laden und öffnen. | manuell |
+| **Obtainium** | NiimStudio mit einem Tipp [zu Obtainium hinzufügen](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio). | automatisch |
 | **Komi Store** | Im [Komi Store](https://github.com/komi-store/komi-store) (früher GitHub Store) nach **NiimStudio** suchen. | automatisch |
 | **F-Droid** | Demnächst. | automatisch |
 
@@ -72,7 +79,7 @@ NiimStudio läuft ab **Android 8.0** und braucht Bluetooth. Wähle den Weg, der 
 
 1. [Obtainium](https://github.com/ImranR98/Obtainium) installieren (über F-Droid oder die GitHub-Releases).
 2. Am Handy oben auf das Badge **Get it on Obtainium** tippen – oder in Obtainium **App hinzufügen** wählen und
-   `https://github.com/TobseF/NiimStudio` einfügen.
+   `https://github.com/Valinok/NiimStudio` einfügen.
 3. **Installieren** tippen. Obtainium prüft GitHub auf neue Versionen und bietet jedes Update an.
 
 </details>
@@ -82,7 +89,7 @@ NiimStudio läuft ab **Android 8.0** und braucht Bluetooth. Wähle den Weg, der 
 
 1. [Komi Store](https://github.com/komi-store/komi-store) (früher GitHub Store) installieren – über
    [F-Droid](https://f-droid.org/packages/zed.rainxch.githubstore/) oder die GitHub-Releases.
-2. Nach **NiimStudio** suchen (oder das Repository `TobseF/NiimStudio` öffnen).
+2. Nach **NiimStudio** suchen (oder das Repository `Valinok/NiimStudio` öffnen).
 3. **Installieren** tippen. Komi Store hält die App aktuell.
 
 </details>
@@ -102,7 +109,7 @@ sobald die App veröffentlicht ist.
 | Drucker | Status |
 |---|---|
 | **NIIMBOT B18** | ✅ getestet |
-| Andere NIIMBOT-Modelle | funktionieren wahrscheinlich, wenn sie dasselbe Protokoll sprechen – ungetestet, [Rückmeldung willkommen](https://github.com/TobseF/NiimStudio/issues) |
+| Andere NIIMBOT-Modelle | funktionieren wahrscheinlich, wenn sie dasselbe Protokoll sprechen – ungetestet, [Rückmeldung willkommen](https://github.com/Valinok/NiimStudio/issues) |
 
 ## <img src="docs/media/icons/install.svg" width="26" align="top" alt=""> Erster Druck in einer Minute
 

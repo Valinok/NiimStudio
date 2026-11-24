@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.SimpleDateFormat
@@ -66,6 +67,7 @@ object PrinterManager {
     private var client: NiimbotClient? = null
     private var heartbeatJob: Job? = null
     private var printJob: Job? = null
+    private var connectJob: Job? = null
     private val timeFmt = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
 
     val isConnected get() = _state.value is ConnState.Connected
@@ -73,8 +75,9 @@ object PrinterManager {
 
     fun log(msg: String) {
         android.util.Log.d("NiimStudio", msg)
-        val line = "${timeFmt.format(Date())} $msg"
         synchronized(this) {
+            // SimpleDateFormat is not thread-safe; log() is called from BLE/SPP threads and coroutines.
+            val line = "${timeFmt.format(Date())} $msg"
             val l = _log.value
             _log.value = (if (l.size >= 3000) l.drop(500) else l) + line
         }
@@ -106,7 +109,8 @@ object PrinterManager {
     }
 
     fun connect(ctx: Context, address: String, name: String, kind: TransportKind) {
-        scope.launch { connectNow(ctx, address, name, kind) }
+        connectJob?.cancel()
+        connectJob = scope.launch { connectNow(ctx, address, name, kind) }
     }
 
     /** Ensures a connection to the saved printer. Returns true when connected. */
@@ -158,6 +162,8 @@ object PrinterManager {
     }
 
     fun disconnect() {
+        // Cancel an in-flight handshake: otherwise disconnect waits for its timeouts.
+        connectJob?.cancel()
         scope.launch { connectLock.withLock { closeClient() } }
     }
 
@@ -183,6 +189,11 @@ object PrinterManager {
                     failures = 0
                 } catch (e: Exception) {
                     if (++failures <= 3) log("Heartbeat failed: ${e.message}")
+                    else {
+                        log("Printer not responding, disconnecting: ${e.message}")
+                        closeClient() // otherwise the UI keeps showing a dead connection
+                        break
+                    }
                 }
             }
         }
@@ -223,7 +234,19 @@ object PrinterManager {
     }
 
     fun cancelPrint() {
-        printJob?.cancel()
+        val job = printJob?.takeIf { it.isActive } ?: return
+        _printing.value = _printing.value?.copy(stage = PrintStage.CANCELLED)
+        scope.launch {
+            // Tell the printer first: cancelling the coroutine alone leaves it printing.
+            client?.let { c ->
+                try {
+                    c.cancelPrint()
+                } catch (e: Exception) {
+                    log("Cancel command failed: ${e.message}")
+                }
+            }
+            job.cancel()
+        }
     }
 }
 

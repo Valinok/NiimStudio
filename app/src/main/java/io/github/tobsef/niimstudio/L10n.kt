@@ -23,7 +23,9 @@ object L10n {
     /** Language codes with a translation, e.g. ["de", "en"]. */
     val available: List<String> = BuildConfig.LANGUAGES.split(',').filter { it.isNotBlank() }
 
-    private var cache: Pair<String, Context>? = null
+    @Volatile private var cache: Pair<String, Context>? = null
+    private val localeLock = Any()
+    private var appliedLocale: Locale? = null
 
     /** The configured language code, or null when following the system. */
     fun configured(): String? = Store.settings.value.language.takeIf { it != LANGUAGE_SYSTEM && it in available }
@@ -45,7 +47,14 @@ object L10n {
     /** Wraps a context so its resources use the configured language. */
     fun wrap(base: Context): Context {
         // Number formats ("%.2f".format) follow the app language, not only the phone language.
-        Locale.setDefault(locale())
+        // Only touch the global default when it actually changes, and never concurrently.
+        val loc = locale()
+        synchronized(localeLock) {
+            if (appliedLocale != loc) {
+                Locale.setDefault(loc)
+                appliedLocale = loc
+            }
+        }
         val lang = configured() ?: return base
         val cfg = Configuration(base.resources.configuration)
         cfg.setLocales(LocaleList(Locale.forLanguageTag(lang)))

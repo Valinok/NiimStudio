@@ -14,15 +14,28 @@ import io.github.tobsef.niimstudio.model.LabelDoc
 import io.github.tobsef.niimstudio.model.LabelProfile
 import io.github.tobsef.niimstudio.model.Template
 import io.github.tobsef.niimstudio.model.newId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.IOException
 
 /** App-wide persistence: settings, label profiles, templates, draft, imported images and fonts. */
 object Store {
+    /** Serial writes, so a rapid sequence of settings changes cannot reorder the files. */
+    private val writeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+    private var settingsJob: Job? = null
+
     val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -56,6 +69,21 @@ object Store {
         _templates.value = templatesDir.listFiles { f -> f.extension == "json" }.orEmpty()
             .mapNotNull { readJson<Template>(it) }
             .sortedByDescending { it.updated }
+        extractBundledFonts()
+    }
+
+    /** Copies bundled fonts (assets/fonts) into the user fonts dir once, so they show up in the font picker. */
+    private fun extractBundledFonts() {
+        val names = runCatching { appContext.assets.list("fonts") }.getOrNull() ?: return
+        for (name in names) {
+            val target = File(fontsDir, name)
+            if (target.exists()) continue
+            runCatching {
+                appContext.assets.open("fonts/$name").use { input ->
+                    target.outputStream().use { input.copyTo(it) }
+                }
+            }
+        }
     }
 
     private inline fun <reified T> readJson(f: File): T? = try {
@@ -67,8 +95,14 @@ object Store {
 
     private inline fun <reified T> writeJson(f: File, value: T) {
         val tmp = File(f.parentFile, f.name + ".tmp")
-        tmp.writeText(json.encodeToString(value))
-        tmp.renameTo(f)
+        try {
+            tmp.writeText(json.encodeToString(value))
+            if (!tmp.renameTo(f) && (f.exists() && !f.delete() || !tmp.renameTo(f))) {
+                throw IOException("Cannot write ${f.name}")
+            }
+        } finally {
+            if (tmp.exists()) tmp.delete()
+        }
     }
 
     // ---- settings
@@ -76,7 +110,18 @@ object Store {
     fun updateSettings(transform: (AppSettings) -> AppSettings) {
         val s = transform(_settings.value)
         _settings.value = s
-        writeJson(File(dir, "settings.json"), s)
+        // Many taps/slider moves must not block the main thread with a disk write each.
+        settingsJob?.cancel()
+        settingsJob = writeScope.launch {
+            delay(400)
+            writeJson(File(dir, "settings.json"), s)
+        }
+    }
+
+    /** Flushes a pending debounced write when the activity stops. */
+    fun flushSettings() {
+        settingsJob?.cancel()
+        runBlocking(Dispatchers.IO + NonCancellable) { writeJson(File(dir, "settings.json"), _settings.value) }
     }
 
     // ---- profiles
@@ -147,6 +192,7 @@ object Store {
         }
         val name = "${newId()}.png"
         File(imagesDir, name).outputStream().use { out.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        src.recycle()
         return name
     }
 
@@ -158,13 +204,25 @@ object Store {
         } ?: "font-${newId()}.ttf"
         display = display.replace(Regex("[^A-Za-z0-9._ -]"), "_")
         if (!display.lowercase().endsWith(".ttf") && !display.lowercase().endsWith(".otf")) display += ".ttf"
-        val f = File(fontsDir, display)
-        cr.openInputStream(uri).use { input -> f.outputStream().use { input!!.copyTo(it) } }
-        // Validate: throws if it is not a font.
-        android.graphics.Typeface.createFromFile(f)
-        return "file:${f.name}"
+        // Never overwrite an existing import: a second file with the same name gets a suffix.
+        val stem = display.substringBeforeLast('.')
+        val ext = display.substringAfterLast('.')
+        var target = File(fontsDir, display)
+        var n = 2
+        while (target.exists()) target = File(fontsDir, "${stem}_${n++}.$ext")
+        // Validate before publishing the file, otherwise a broken font stays in the picker forever.
+        val tmp = File(fontsDir, "${target.name}.${newId()}.tmp")
+        try {
+            cr.openInputStream(uri).use { input -> tmp.outputStream().use { input!!.copyTo(it) } }
+            android.graphics.Typeface.createFromFile(tmp)
+            if (!tmp.renameTo(target)) throw IOException("Cannot store $display")
+        } finally {
+            if (tmp.exists()) tmp.delete()
+        }
+        return "file:${target.name}"
     }
 
     fun readText(uri: Uri): String =
-        appContext.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: ""
+        (appContext.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: "")
+            .removePrefix("\uFEFF") // UTF-8 BOM would end up in the first CSV column
 }

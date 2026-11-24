@@ -11,13 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
@@ -42,10 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,6 +68,7 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
     val ctx = LocalContext.current
     // Back leaves sub-pages (pickers, element tabs, templates …) first; only the start page exits.
     BackHandler(enabled = !vm.atHome) { vm.navigateBack() }
+    BackHandler(enabled = vm.inlineEditId != null) { vm.endInlineEdit() }
     val conn by PrinterManager.state.collectAsState()
     val profiles by Store.profiles.collectAsState()
     val settings by Store.settings.collectAsState()
@@ -77,17 +78,18 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
     var confirmNew by remember { mutableStateOf(false) }
     var saveOpen by remember { mutableStateOf(false) }
     var printOpen by remember { mutableStateOf(false) }
-    var editText by remember { mutableStateOf<TextEl?>(null) }
-    var lastEditRequest by remember { mutableIntStateOf(vm.editRequest) }
+    val density = LocalDensity.current
+    // The IME height is only used to hide Save/Print. The reserved space is a fixed
+    // value so the tab row and the text field never move when the keyboard appears.
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val keyboardSpacer = with(density) { (ctx.resources.displayMetrics.heightPixels * 0.372f).toInt().toDp() }
+    // Save/Print occupy the bottom of the reserved area; the panel may use the rest.
+    val actionBarHeight = 61.dp
+    val panelExtraHeight = (keyboardSpacer - actionBarHeight).coerceAtLeast(0.dp)
+    val bottomSpacerHeight = keyboardSpacer - panelExtraHeight
 
-    LaunchedEffect(vm.editRequest) {
-        if (vm.editRequest != lastEditRequest) {
-            lastEditRequest = vm.editRequest
-            (vm.selected as? TextEl)?.let { editText = it }
-        }
-    }
-
-    Column(Modifier.fillMaxSize().background(Color.White)) {
+    Box(Modifier.fillMaxSize().background(Color.White)) {
+    Column(Modifier.fillMaxSize()) {
         // ---- top bar
         Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { confirmNew = true }) { Icon(Icons.Outlined.Close, stringResource(R.string.new_label), Modifier.size(28.dp)) }
@@ -100,22 +102,32 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             IconButton(onClick = vm::togglePortrait) { Icon(Icons.Outlined.ScreenRotation, stringResource(R.string.rotate_label), Modifier.size(28.dp)) }
             IconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, stringResource(R.string.settings), Modifier.size(28.dp)) }
             Box {
+                val connected = conn as? ConnState.Connected
                 val (icon, tint) = when (conn) {
                     is ConnState.Connected -> Icons.Filled.BluetoothConnected to AppColors.Ok
                     is ConnState.Connecting -> Icons.AutoMirrored.Filled.BluetoothSearching to AppColors.Orange
                     is ConnState.Failed -> Icons.Filled.Bluetooth to AppColors.Accent
                     ConnState.Disconnected -> Icons.Filled.Bluetooth to Color(0xFF9A9AA0)
                 }
-                Box(
-                    Modifier.padding(horizontal = 6.dp).size(42.dp).clip(CircleShape).background(tint.copy(alpha = 0.12f))
-                        .clickable { printerMenu = true },
-                    contentAlignment = Alignment.Center,
-                ) { Icon(icon, stringResource(R.string.printer), tint = tint) }
+                // In the connected state model, battery and Bluetooth are one control.
+                Row(
+                    Modifier.clickable { printerMenu = true }.padding(horizontal = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (connected != null) {
+                        Text(printerModelName(connected.info), fontSize = 13.sp, color = Color(0xFF333333), maxLines = 1)
+                        BatteryIndicator(connected.info.battery)
+                    }
+                    Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+                        Icon(icon, stringResource(R.string.printer), tint = tint)
+                    }
+                }
                 DropdownMenu(printerMenu, { printerMenu = false }) {
                     val s = settings
                     Text(
                         when (val c = conn) {
-                            is ConnState.Connected -> "${c.name}\n${c.info}"
+                            is ConnState.Connected -> "${c.name}\n${printerSummary(c.info)}"
                             else -> connText(c, s)
                         },
                         Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 13.sp, color = AppColors.TextGrey,
@@ -182,33 +194,40 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
         // ---- canvas
         LabelCanvas(vm, Modifier.weight(1f).fillMaxWidth())
 
-        // ---- panel
-        BottomPanel(vm)
+        // ---- panel: fixed position; keyboard height is reserved below it at all times
+        Column(Modifier.fillMaxWidth()) {
+            BottomPanel(vm, extraBodyHeight = panelExtraHeight)
+            Spacer(Modifier.fillMaxWidth().height(bottomSpacerHeight))
+        }
+    }
 
-        // ---- bottom actions
-        HorizontalDivider(color = AppColors.Divider)
-        Row(Modifier.fillMaxWidth().height(60.dp).background(Color.White), verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.weight(1f).fillMaxSize().testTag("save").clickable { saveOpen = true },
-                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Outlined.Save, null, Modifier.size(28.dp))
-                Text("  " + stringResource(R.string.save), fontSize = 18.sp)
-            }
-            Box(Modifier.width(1.dp).height(28.dp).background(AppColors.Divider))
-            Row(
-                Modifier.weight(1f).fillMaxSize().testTag("print").clickable { printOpen = true },
-                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Outlined.Print, null, Modifier.size(28.dp))
-                Text("  " + stringResource(R.string.print), fontSize = 18.sp)
+    // Save/Print are drawn over the reserved area and hidden while the keyboard is open.
+    if (!imeVisible) {
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.White)) {
+            HorizontalDivider(color = AppColors.Divider)
+            Row(Modifier.fillMaxWidth().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.weight(1f).fillMaxSize().testTag("save").clickable { saveOpen = true },
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Outlined.Save, null, Modifier.size(28.dp))
+                    Text("  " + stringResource(R.string.save), fontSize = 18.sp)
+                }
+                Box(Modifier.width(1.dp).height(28.dp).background(AppColors.Divider))
+                Row(
+                    Modifier.weight(1f).fillMaxSize().testTag("print").clickable { printOpen = true },
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Outlined.Print, null, Modifier.size(28.dp))
+                    Text("  " + stringResource(R.string.print), fontSize = 18.sp)
+                }
             }
         }
+    }
     }
 
     if (confirmClear) ConfirmDialog(stringResource(R.string.clear_all_title), stringResource(R.string.clear_all_text), stringResource(R.string.action_delete), { confirmClear = false }) { vm.clearAll() }
     if (confirmNew) ConfirmDialog(stringResource(R.string.new_label_title), stringResource(R.string.new_label_text), stringResource(R.string.new_action), { confirmNew = false }) { vm.newLabel() }
     if (saveOpen) SaveTemplateDialog(vm) { saveOpen = false }
     if (printOpen) PrintSheet(vm, onDismiss = { printOpen = false }, onOpenSettings = { printOpen = false; onOpenSettings() })
-    editText?.let { e -> TextEditDialog(vm, e) { editText = null } }
 }

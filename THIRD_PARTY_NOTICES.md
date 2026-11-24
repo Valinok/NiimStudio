@@ -45,6 +45,13 @@ SOFTWARE.
 
 The full text of the Apache License 2.0 is available at <https://www.apache.org/licenses/LICENSE-2.0>.
 
+## Assets intentionally excluded
+
+The working copy this fork was prepared from contained Microsoft TTF fonts (`assets/fonts/*.ttf`)
+and SVG icons traced from the vendor application (`assets/editor_icons/*.svg`). Neither is included
+in this repository or in builds made from it: the font picker falls back to system fonts, and the
+editor icon buttons fall back to Apache-2.0 licensed Material Icons.
+
 ## Trademarks
 
 NIIMBOT is a trademark of its respective owner. NiimStudio is an independent project and is

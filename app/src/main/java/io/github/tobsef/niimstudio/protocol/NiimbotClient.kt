@@ -2,6 +2,7 @@ package io.github.tobsef.niimstudio.protocol
 
 import io.github.tobsef.niimstudio.transport.Transport
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -43,7 +44,8 @@ data class PrinterInfo(
 class NiimbotClient(private val transport: Transport, private val log: (String) -> Unit) {
 
     private val parser = PacketStreamParser()
-    private val incoming = Channel<NiimbotPacket>(Channel.UNLIMITED)
+    // Unsolicited packets arrive during printing (heartbeat is paused then); don't let them grow forever.
+    private val incoming = Channel<NiimbotPacket>(64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val lock = Mutex()
 
     var info = PrinterInfo()

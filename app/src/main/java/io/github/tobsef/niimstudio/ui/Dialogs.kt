@@ -118,32 +118,6 @@ fun SaveTemplateDialog(vm: EditorViewModel, onDismiss: () -> Unit) {
     )
 }
 
-/** Opened by double tap / edit button on a text element. */
-@Composable
-fun TextEditDialog(vm: EditorViewModel, e: TextEl, onDismiss: () -> Unit) {
-    var text by remember { mutableStateOf(e.text) }
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.text_edit_title)) },
-        text = {
-            OutlinedTextField(
-                text, { text = it },
-                Modifier.fillMaxWidth().focusRequester(focus),
-                minLines = 3,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                vm.updateElement(e.id) { (it as TextEl).copy(text = text) }
-                onDismiss()
-            }) { Text(stringResource(R.string.ok)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
-}
-
 @Composable
 fun WifiDialog(onDismiss: () -> Unit, onOk: (String) -> Unit) {
     var ssid by remember { mutableStateOf("") }

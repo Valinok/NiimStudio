@@ -50,6 +50,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -75,6 +76,24 @@ import io.github.tobsef.niimstudio.model.TextEl
 import io.github.tobsef.niimstudio.render.DataVars
 import io.github.tobsef.niimstudio.render.RenderCtx
 import io.github.tobsef.niimstudio.render.Renderer
+import android.text.TextPaint
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
+import io.github.tobsef.niimstudio.render.Fonts
+import io.github.tobsef.niimstudio.render.MM_PER_PT
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -124,25 +143,52 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
         pan = Offset.Zero
     }
 
+    // Inline text editing: the selected text element is edited in place on the canvas.
+    val editId = vm.inlineEditId
+    val editEl = doc.elements.firstOrNull { it.id == editId } as? TextEl
+    LaunchedEffect(editId, editEl == null) {
+        if (editId != null && editEl == null) vm.endInlineEdit()
+    }
+    var fieldValue by remember(editId) { mutableStateOf(TextFieldValue(editEl?.text ?: "")) }
+    // Undo/redo and templates can change the text behind the field's back: re-sync without
+    // touching the field while the user types (then doc text is already fieldValue.text).
+    val externalText = editEl?.text
+    LaunchedEffect(editId, externalText) {
+        if (externalText != null && externalText != fieldValue.text) {
+            fieldValue = TextFieldValue(externalText, selection = TextRange(externalText.length))
+        }
+    }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(editId) { if (editId != null) focusRequester.requestFocus() }
+    val displayDoc = if (editEl != null) doc.copy(elements = doc.elements.filterNot { it.id == editId }) else doc
+
     /** Space at the bottom for the whole-label preview of flag/wrap layouts. */
     fun reserve(d: LabelDoc): Float = if (d.sides != io.github.tobsef.niimstudio.model.SideMode.SINGLE) with(density) { 92.dp.toPx() } else 0f
 
-    fun scale(d: LabelDoc = vm.doc): Float {
+    fun scale(d: LabelDoc = vm.doc, sz: IntSize = size): Float {
         val pad = with(density) { 28.dp.toPx() }
-        val s = min((size.width - 2 * pad) / d.widthMm, (size.height - reserve(d) - 2 * pad) / d.heightMm)
+        val s = min((sz.width - 2 * pad) / d.widthMm, (sz.height - reserve(d) - 2 * pad) / d.heightMm)
         return max(s, 1f) * zoom
     }
 
-    fun base(s: Float, d: LabelDoc = vm.doc) =
-        Offset((size.width - d.widthMm * s) / 2f, (size.height - reserve(d) - d.heightMm * s) / 2f)
-    fun origin(s: Float) = base(s) + pan
+    fun base(s: Float, d: LabelDoc = vm.doc, sz: IntSize = size) =
+        Offset((sz.width - d.widthMm * s) / 2f, (sz.height - reserve(d) - d.heightMm * s) / 2f)
+    fun origin(s: Float, sz: IntSize = size) = base(s, vm.doc, sz) + pan
+
+    /** Keep the whole label at the top of the canvas at all times. */
+    fun labelOrigin(s: Float, sz: IntSize = size): Offset {
+        val o = origin(s, sz)
+        val topMargin = with(density) { 12.dp.toPx() }
+        return o - Offset(0f, max(0f, o.y - topMargin))
+    }
+
     fun toMm(p: Offset): Offset {
         val s = scale()
-        return (p - origin(s)) / s
+        return (p - labelOrigin(s)) / s
     }
     fun toScreen(mm: Offset): Offset {
         val s = scale()
-        return origin(s) + mm * s
+        return labelOrigin(s) + mm * s
     }
 
     fun hitElement(mm: Offset): Element? {
@@ -233,10 +279,12 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
                             val pc = ev.calculatePan()
                             val centroid = ev.calculateCentroid()
                             val s0 = scale()
-                            val mmC = (centroid - origin(s0)) / s0
+                            val o0 = labelOrigin(s0)
+                            val mmC = (centroid - o0) / s0
+                            val labelLift = origin(s0).y - o0.y
                             zoom = (zoom * zc).coerceIn(0.5f, 8f)
                             val s1 = scale()
-                            pan = centroid - mmC * s1 - base(s1) + pc
+                            pan = centroid - mmC * s1 - base(s1) + pc + Offset(0f, labelLift)
                             ev.changes.forEach { it.consume() }
                             continue
                         }
@@ -314,7 +362,7 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
         Canvas(Modifier.fillMaxSize()) {
             if (size.width == 0) return@Canvas
             val s = scale(doc)
-            val o = origin(s)
+            val o = labelOrigin(s)
             val lw = doc.widthMm * s
             val lh = doc.heightMm * s
             val corner = CornerRadius(doc.profile.cornerMm * s)
@@ -342,7 +390,7 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
                     nc.save()
                     nc.translate(o.x, o.y)
                     nc.scale(s, s)
-                    Renderer.drawElements(nc, doc, rc)
+                    Renderer.drawElements(nc, displayDoc, rc)
                     nc.restore()
                 }
             }
@@ -373,7 +421,7 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
                     path, AppColors.Selection,
                     style = Stroke(1.5.dp.toPx(), pathEffect = if (sel.locked) PathEffect.dashPathEffect(floatArrayOf(12f, 8f)) else null),
                 )
-                if (!sel.locked && !dragging) {
+                if (!sel.locked && !dragging && editId == null) {
                     val r = 6.dp.toPx()
                     for (h in listOf(Handle.RIGHT, Handle.BOTTOM)) {
                         val p = o + handlePos(f, h) * s
@@ -400,6 +448,7 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
         // Whole printed label (both panels) for flag and wrap layouts
         if (doc.sides != io.github.tobsef.niimstudio.model.SideMode.SINGLE) {
             val strip by produceState<android.graphics.Bitmap?>(null, doc, vm.previewRow) {
+                kotlinx.coroutines.delay(120) // debounce while dragging/resizing
                 value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     val sc = (900f / maxOf(doc.totalLengthMm, 1f)).coerceAtMost(12f)
                     Renderer.renderLabel(doc, RenderCtx(vars = DataVars.vars(doc.data, vm.previewRow)), sc, applyOffsets = false)
@@ -424,11 +473,70 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
             }
         }
 
+        // Inline text editor: edit directly on the preview, in place.
+        if (editEl != null && size.width > 0) {
+            val s = scale(doc)
+            // The whole label is always at the top; the field stays attached to it.
+            val o = labelOrigin(s)
+            val f = editEl.frame
+            val st = editEl.style
+            val left = o.x + f.x * s
+            val top = o.y + f.y * s
+            val padMm = if (st.inverse) 0.6f else 0f
+            val sizeMm = st.sizePt * MM_PER_PT
+            // Match the renderer's line height: font metrics height + extra line spacing.
+            val fontHeightMm = remember(st.font, st.bold, st.italic, st.letterSpacing, sizeMm) {
+                val p = TextPaint()
+                p.typeface = Fonts.typeface(st.font, st.bold, st.italic)
+                p.textSize = sizeMm * 100f
+                p.letterSpacing = st.letterSpacing
+                val fm = p.fontMetrics
+                (fm.descent - fm.ascent) / 100f
+            }
+            val textStyle = TextStyle(
+                fontSize = with(density) { (sizeMm * s).toSp() },
+                fontFamily = FontFamily(Fonts.typeface(st.font, st.bold, st.italic)),
+                letterSpacing = st.letterSpacing.em,
+                lineHeight = with(density) { ((fontHeightMm + st.lineSpacing) * s).toSp() },
+                textAlign = when (st.alignH) { 0 -> TextAlign.Start; 2 -> TextAlign.End; else -> TextAlign.Center },
+                color = if (st.inverse) Color.White else Color.Black,
+                textDecoration = TextDecoration.combine(buildList {
+                    if (st.underline) add(TextDecoration.Underline)
+                    if (st.strike) add(TextDecoration.LineThrough)
+                }),
+            )
+            // Tap anywhere outside the field to finish editing.
+            Box(Modifier.fillMaxSize().pointerInput(editId) { detectTapGestures { vm.endInlineEdit() } })
+            Box(
+                Modifier
+                    .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
+                    .size(with(density) { (f.w * s).toDp() }, with(density) { (f.h * s).toDp() })
+                    .graphicsLayer(rotationZ = f.rotation, scaleX = if (f.mirror) -1f else 1f)
+                    .clipToBounds()
+                    .background(if (st.inverse) Color.Black else Color.Transparent),
+                contentAlignment = when (st.alignV) { 0 -> Alignment.TopCenter; 2 -> Alignment.BottomCenter; else -> Alignment.Center },
+            ) {
+                BasicTextField(
+                    value = fieldValue,
+                    onValueChange = { v ->
+                        fieldValue = v
+                        vm.updateElement(editEl.id, merge = "inline:${editEl.id}") { (it as TextEl).copy(text = v.text) }
+                    },
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).testTag("inline_text").padding(with(density) { (padMm * s).toDp() }),
+                    textStyle = textStyle,
+                    cursorBrush = SolidColor(AppColors.Selection),
+                )
+            }
+            TextButton(onClick = { vm.endInlineEdit() }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                Text(stringResource(R.string.done))
+            }
+        }
+
         // Floating action bar above the selection
         val sel = vm.selected
-        if (sel != null && !dragging && size.width > 0) {
+        if (sel != null && !dragging && size.width > 0 && editId == null) {
             val s = scale(doc)
-            val o = origin(s)
+            val o = labelOrigin(s)
             val f = sel.frame
             val pts = listOf(f.toWorld(0f, 0f), f.toWorld(f.w, 0f), f.toWorld(f.w, f.h), f.toWorld(0f, f.h)).map { o + it * s }
             val top = pts.minOf { it.y }
@@ -443,16 +551,6 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
                 Modifier
                     .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
                     .onSizeChanged { barSize = it }
-                    // Swallow touches on the bar (also between its buttons) so the canvas never sees them.
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            awaitFirstDown(requireUnconsumed = false).consume()
-                            do {
-                                val ev = awaitPointerEvent()
-                                ev.changes.forEach { it.consume() }
-                            } while (ev.changes.any { it.pressed })
-                        }
-                    }
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFF111111))
                     .height(48.dp),
@@ -503,14 +601,17 @@ private fun resized(start: Element, nf: Frame, handle: Handle, s: Float): Elemen
 
 fun openEditor(vm: EditorViewModel, e: Element) {
     vm.select(e.id)
-    vm.panelExpanded = true
     when (e) {
-        is TextEl -> vm.editRequest++
+        is TextEl -> vm.inlineEditId = e.id
         is io.github.tobsef.niimstudio.model.SymbolEl -> {
+            vm.panelExpanded = true
             vm.symbolPickerForNew = false
             vm.tab = PanelTab.SYMBOL
         }
-        else -> vm.tab = PanelTab.CONTENT
+        else -> {
+            vm.panelExpanded = true
+            vm.tab = PanelTab.CONTENT
+        }
     }
 }
 
@@ -527,4 +628,4 @@ private fun BarIcon(icon: ImageVector, desc: String, enabled: Boolean = true, on
 }
 
 @Composable
-private fun BarSep() = Box(Modifier.size(1.dp, 48.dp).background(Color(0xFF3A3A3A)))
+private fun BarSep() = Box(Modifier.size(1.dp, 48.dp).clickable(onClick = {}).background(Color(0xFF3A3A3A)))

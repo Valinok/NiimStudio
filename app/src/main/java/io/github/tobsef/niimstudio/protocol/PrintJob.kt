@@ -1,6 +1,8 @@
 package io.github.tobsef.niimstudio.protocol
 
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * Packet sequences for printing. The official SDK ships several per-model
@@ -108,12 +110,15 @@ class PrintJob(
             }
             ok = true
         } finally {
-            try {
-                log("PrintEnd -> ${client.printEnd()}")
-            } catch (e: Exception) {
-                log("PrintEnd failed: ${e.message}")
+            // The job may be cancelled: still close the printer's print session and report the end.
+            withContext(NonCancellable) {
+                try {
+                    log("PrintEnd -> ${client.printEnd()}")
+                } catch (e: Exception) {
+                    log("PrintEnd failed: ${e.message}")
+                }
+                progress(PrintProgress(done, total, if (ok) PrintStage.DONE else PrintStage.CANCELLED, if (ok) 1f else done.toFloat() / total))
             }
-            progress(PrintProgress(done, total, if (ok) PrintStage.DONE else PrintStage.CANCELLED, if (ok) 1f else done.toFloat() / total))
         }
     }
 
