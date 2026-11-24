@@ -10,172 +10,50 @@
 > with a Russian UI, a reworked bottom editor panel and printer fixes. Parts of the changes were
 > generated with AI assistance ("нейрослоп") and have not received the same review as upstream — use
 > them at your own risk. Proprietary Microsoft fonts and icons traced from the vendor app are **not**
-> distributed here: system fonts and built-in Material icons are used instead. Releases, if any, are
-> published from this fork, not from upstream.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
-    <img src="docs/media/banner-light.svg" width="100%" alt="NiimStudio – design and print labels on your NIIMBOT printer">
-  </picture>
-</p>
+> distributed here: system fonts and built-in Material icons are used instead. Releases are published
+> from this fork, not from upstream.
 
 <p align="center">
   <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://img.shields.io/github/v/release/Valinok/NiimStudio?style=flat-square&color=F5413D&label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/internet-not%20required-555?style=flat-square" alt="No internet permission">
+  <a href="https://valinok.github.io/NiimStudio/fdroid/repo/"><img src="https://img.shields.io/badge/Droid--ify-add%20repo-3DDC84?style=flat-square" alt="Add F-Droid repository"></a>
 </p>
 
-<p align="center">
-  <b>The free label designer for NIIMBOT printers.</b><br>
-  Design cable flags, storage labels and price tags on your phone and print them over Bluetooth –<br>
-  no account, no cloud, no ads.
-</p>
+## What changed in this fork
 
-<p align="center">
-  <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Get it on GitHub"></a>
-</p>
+- **Russian UI** (English and German remain available); this README is also translated into all three languages.
+- **Stable bottom panel** — tabs and the content field no longer jump when the keyboard opens; the label stays at the top of the canvas.
+- **Printer status at a glance** — model, battery level (4 bars) and Bluetooth state in one tappable header block; tapping it shows firmware and connection details.
+- **NIIMBOT D110_M** works with the Legacy/D110 variant (203 dpi, density 1–5).
+- **No proprietary assets** — Microsoft TTF fonts and traced SVG icons are absent; system fonts and Apache-2.0 Material icon fallbacks are used.
+- **Editor/printer fixes** — debounced drafts and preview, undo/redo, cancel-print, print-end cleanup, Bluetooth heartbeat and disconnect handling.
+- Fully offline: no account, no cloud, and not even the internet permission.
 
-## <img src="docs/media/icons/features.svg" width="26" align="top" alt=""> Features
+## Screenshots
 
-- **What you see is what you print** – drag & drop, pinch-zoom, snap guides, undo/redo and a 1-bit print preview that matches the label exactly.
-- **Everything a label needs** – text, images, 200+ symbols, date & best-before, barcodes, QR codes, serial numbers, shapes and lines.
-- **Precise layout** – align to the label, nudge with a move pad, and edit any value inline with live preview, rounding and your recent values.
-- **Cable labels** – 17 connector symbols (USB, HDMI, RJ45, DC, …) and cable flags that are printed on both sides and wrap around the cable.
-- **Profiles & templates** – editable label sizes, and layouts saved as templates with a preview.
-- **Batch printing** – fill placeholders from a list or CSV, or number labels automatically.
-- **Private by design** – works fully offline, no account, not even the internet permission.
-- **Printer status at a glance** – model, battery level (4 bars) and Bluetooth state are combined in one tappable header block; tapping it shows firmware and connection details.
-- **Your language** – English, German and Russian, easy to add more.
+| | | | | |
+|---|---|---|---|---|
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="160" alt=""><br><sub>All elements</sub> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="160" alt=""><br><sub>Symbol library</sub> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="160" alt=""><br><sub>Style panel</sub> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="160" alt=""><br><sub>Printer status / battery</sub> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="160" alt=""><br><sub>Keyboard open</sub> |
 
-## <img src="docs/media/icons/screens.svg" width="26" align="top" alt=""> Screenshots
+## Install
 
-<table>
-  <tr>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="160" alt=""><br><sub>All elements</sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="160" alt=""><br><sub>Symbol library</sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="160" alt=""><br><sub>QR codes</sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="160" alt=""><br><sub>Snap guides</sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="160" alt=""><br><sub>Print preview</sub></td>
-  </tr>
-</table>
+NiimStudio needs **Android 8.0+** and Bluetooth.
 
-## <img src="docs/media/icons/download.svg" width="26" align="top" alt=""> Download & install
+- **GitHub Releases:** download `NiimStudio-<version>-release.apk` from the [latest release](https://github.com/Valinok/NiimStudio/releases/latest) and open it.
+- **Droid-ify (or another F-Droid client):** [add our repository with one tap](fdroidrepos://valinok.github.io/NiimStudio/fdroid/repo/?fingerprint=F04731C891EBFB25CD323255D0E873C950CCFF3386A46C069B8D02D38C12F733). It provides the same signed APK with automatic updates. Manual details: URL `https://valinok.github.io/NiimStudio/fdroid/repo/`, fingerprint `F04731C8 91EBFB25 CD323255 D0E873C9 50CCFF33 86A46C06 9B8D02D3 8C12F733`.
 
-NiimStudio runs on **Android 8.0 or newer** and needs Bluetooth. Pick whichever way you like:
+This fork uses its own signing key. If a version from upstream or another source is already installed, uninstall it first.
 
-| | How | Updates |
-|---|---|---|
-| **GitHub Releases** | Download `NiimStudio-<version>-release.apk` from the [latest release](https://github.com/Valinok/NiimStudio/releases/latest) and open it. | manual |
-| **Komi Store** | Search for **NiimStudio** in [Komi Store](https://github.com/komi-store/komi-store) (formerly GitHub Store). | automatic |
-| **F-Droid** | Coming soon. | automatic |
-
-<details>
-<summary><b>Install with Komi Store</b></summary>
-
-1. Install [Komi Store](https://github.com/komi-store/komi-store) (formerly GitHub Store) – from
-   [F-Droid](https://f-droid.org/packages/zed.rainxch.githubstore/) or its GitHub releases.
-2. Search for **NiimStudio** (or open the repository `Valinok/NiimStudio`).
-3. Tap **Install**. Komi Store keeps the app up to date.
-
-</details>
-
-<details>
-<summary><b>F-Droid</b></summary>
-
-<a href="#"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="60" alt="F-Droid (coming soon)"></a>
-
-NiimStudio is prepared for F-Droid (store texts and graphics in `fastlane/`). The link will appear here once
-the app is published.
-
-</details>
-
-## <img src="docs/media/icons/printer.svg" width="26" align="top" alt=""> Supported printers
+## Supported printers
 
 | Printer | Status |
 |---|---|
 | **NIIMBOT B18** | ✅ tested in upstream |
 | **NIIMBOT D110_M** | ✅ tested in this fork (Legacy/D110 variant, 203 dpi, density 1–5) |
-| Other NIIMBOT models | probably work if they use the same protocol – untested, [feedback welcome](https://github.com/Valinok/NiimStudio/issues) |
 
-## <img src="docs/media/icons/install.svg" width="26" align="top" alt=""> First print in one minute
-
-1. Switch the printer on and open NiimStudio. Allow Bluetooth access.
-2. Tap the **Bluetooth** button and pick your printer (e.g. `B18-…`).
-3. Choose your label size at the top (e.g. **12×40**), add text, symbols or connectors.
-4. Tap **Print**.
-
----
-
-## <img src="docs/media/icons/build.svg" width="26" align="top" alt=""> Development
-
-Kotlin, Jetpack Compose and Material 3. Requirements: JDK 17 and the Android SDK.
-
-```bash
-./gradlew assembleDebug          # app/build/outputs/apk/debug/NiimStudio-<version>-debug.apk
-./gradlew testDebugUnitTest      # unit tests (protocol, layout, translations)
-```
-
-| Folder | Content |
-|---|---|
-| `model/`, `data/` | label model and persistence |
-| `render/` | one renderer for the editor and the printer (8 dots/mm) |
-| `printer/`, `protocol/`, `transport/` | connection, NIIMBOT protocol, SPP/BLE – see [protocol notes](docs/protocol.md) |
-| `ui/` | Jetpack Compose screens |
-
-<details>
-<summary><img src="docs/media/icons/language.svg" width="18" align="top" alt=""> <b>Add a language</b></summary>
-
-1. Copy `app/src/main/res/values/strings.xml` to `app/src/main/res/values-<code>/strings.xml` (e.g. `values-fr`).
-2. Translate the texts. Keep placeholders like `%1$s`, `%1$d` and `{N}`. Symbol names (`sym_…`) contain a
-   list of search terms after `|`.
-3. Run `./gradlew testDebugUnitTest`.
-
-That's all: the build finds the new folder and adds the language to the picker. `TranslationsTest`
-reports missing keys, mismatching placeholders and missing plural or array entries.
-
-</details>
-
-<details>
-<summary><img src="docs/media/icons/plug.svg" width="18" align="top" alt=""> <b>Edit or add connector symbols</b></summary>
-
-The connector symbols are plain SVG files in `app/src/main/assets/connectors/` (`usba.svg`, `hdmi.svg`, …).
-Edit them in any vector editor (e.g. Inkscape) and rebuild the app.
-
-- Height 100 units (`viewBox="0 0 <width> 100"`), black outlines with `stroke-width="9"`, contacts as
-  black areas. The aspect ratio comes from the viewBox.
-- New connector: add another SVG. The file name is the key; the name comes from the string
-  `conn_<file name>` if present (translatable), otherwise from the SVG `<title>`.
-- Don't rename existing files – saved labels refer to them by name.
-
-</details>
-
-<details>
-<summary><img src="docs/media/icons/download.svg" width="18" align="top" alt=""> <b>Publish a release</b></summary>
-
-Releases are built, signed and published by GitHub Actions ([release.yml](.github/workflows/release.yml)).
-The builds are reproducible, so F-Droid ships the very same APK with the author's signature.
-
-1. Raise `versionCode` and `versionName` in `app/build.gradle.kts`.
-2. Add `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (and `de-DE`).
-3. Commit, tag with the versionName (e.g. `0.7`) and push the tag. GitHub Actions creates the release
-   with the signed APK; F-Droid picks up the tag automatically.
-
-One-time setup: the repository secrets `NIIMSTUDIO_KEYSTORE_BASE64`, `NIIMSTUDIO_STORE_PASSWORD`,
-`NIIMSTUDIO_KEY_ALIAS` and `NIIMSTUDIO_KEY_PASSWORD`. For local release builds copy
-`keystore.properties.example` to `keystore.properties`.
-
-</details>
-<details>
-<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Update the store screenshots and README graphics</b></summary>
-
-Store screenshots are captured on a phone and scaled to 720×1600. README graphics (banner, icons, flags)
-are generated with `python tools/readme/make_assets.py`.
-
-</details>
-
-## <img src="docs/media/icons/heart.svg" width="26" align="top" alt=""> Credits
+## Credits
 
 Public repositories used for the changes in this fork:
 
@@ -188,9 +66,6 @@ Public repositories used for the changes in this fork:
 
 All licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-## <img src="docs/media/icons/license.svg" width="26" align="top" alt=""> License
+## License
 
-NiimStudio is free software under the [GNU General Public License v3.0](LICENSE).
-
-<sub>NiimStudio is an independent project and is not affiliated with, endorsed or sponsored by NIIMBOT.
-NIIMBOT is a trademark of its respective owner and is used here only to describe compatibility.</sub>
+GPL-3.0 — see [LICENSE](LICENSE). NiimStudio is an independent project and is not affiliated with NIIMBOT.
