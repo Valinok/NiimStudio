@@ -51,6 +51,7 @@
 - **Profile & Vorlagen** – editierbare Etikettengrößen, Layouts als Vorlage mit Vorschaubild speichern.
 - **Serien drucken** – Platzhalter aus einer Liste oder CSV füllen oder Etiketten automatisch nummerieren.
 - **Privat** – läuft komplett offline, kein Konto, nicht einmal eine Internet-Berechtigung.
+- **Druckerstatus auf einen Blick** – Modell, Akkustand (4 Balken) und Bluetooth-Status stehen in einem antippbaren Kopfbereich; ein Tap zeigt Firmware und Verbindungsdetails.
 - **Deine Sprache** – Deutsch, Englisch und Russisch, weitere Sprachen lassen sich leicht ergänzen.
 
 ## <img src="docs/media/icons/screens.svg" width="26" align="top" alt=""> Screenshots

@@ -51,6 +51,7 @@
 - **Profiles & templates** – editable label sizes, and layouts saved as templates with a preview.
 - **Batch printing** – fill placeholders from a list or CSV, or number labels automatically.
 - **Private by design** – works fully offline, no account, not even the internet permission.
+- **Printer status at a glance** – model, battery level (4 bars) and Bluetooth state are combined in one tappable header block; tapping it shows firmware and connection details.
 - **Your language** – English, German and Russian, easy to add more.
 
 ## <img src="docs/media/icons/screens.svg" width="26" align="top" alt=""> Screenshots
