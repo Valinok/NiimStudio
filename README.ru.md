@@ -35,11 +35,6 @@
 
 <p align="center">
   <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Скачать с GitHub"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Установить через Obtainium"></a>
-</p>
-
-<p align="center">
-  <img src="docs/media/teaser-en.gif" width="320" alt="NiimStudio в работе: этикетка с символом сердца, двухстрочным текстом и QR-кодом">
 </p>
 
 ## <img src="docs/media/icons/features.svg" width="26" align="top" alt=""> Возможности
@@ -73,19 +68,8 @@ NiimStudio работает на **Android 8.0 и новее** и требует
 | | Как | Обновления |
 |---|---|---|
 | **GitHub Releases** | Скачайте `NiimStudio-<версия>-release.apk` из [последнего релиза](https://github.com/Valinok/NiimStudio/releases/latest) и откройте его. | вручную |
-| **Obtainium** | [Добавьте NiimStudio в Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio) в одно касание. | автоматически |
 | **Komi Store** | Найдите **NiimStudio** в [Komi Store](https://github.com/komi-store/komi-store) (бывший GitHub Store). | автоматически |
 | **F-Droid** | Скоро. | автоматически |
-
-<details>
-<summary><b>Установка через Obtainium</b></summary>
-
-1. Установите [Obtainium](https://github.com/ImranR98/Obtainium) из F-Droid или его релизов на GitHub.
-2. Нажмите значок **Get it on Obtainium** выше — или откройте Obtainium, выберите **Add app** и вставьте
-   `https://github.com/Valinok/NiimStudio`.
-3. Нажмите **Install**. Obtainium проверяет GitHub на новые версии и предлагает обновления.
-
-</details>
 
 <details>
 <summary><b>Установка через Komi Store</b></summary>
@@ -186,20 +170,10 @@ Kotlin, Jetpack Compose и Material 3. Требуются JDK 17 и Android SDK.
 </details>
 
 <details>
-<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Обновить GIF, скриншоты и графику README</b></summary>
+<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Обновить скриншоты для магазина и графику README</b></summary>
 
-Тизер и скриншоты для магазина записываются автоматически в эмуляторе. Скрипт устанавливает
-debug APK, проигрывает сценарий через adb (независимые от языка test tags), записывает экран
-и превращает его в оптимизированный GIF в рамке телефона.
-
-```bash
-python tools/teaser/record.py --build              # английский + немецкий; нужны adb, ffmpeg и Pillow
-python tools/teaser/record.py --lang de            # только один язык
-python tools/teaser/record.py --gif-only           # пересобрать GIF из последней записи
-python tools/readme/make_assets.py                 # баннер, иконки, флаги, иконка и графика магазина
-```
-
-Результат: `docs/media/teaser-<язык>.gif` и `fastlane/metadata/android/<локаль>/images/`.
+Скриншоты для магазина снимаются на телефоне и масштабируются до 720×1600. Графику README
+(баннер, иконки, флаги) создаёт `python tools/readme/make_assets.py`.
 
 </details>
 

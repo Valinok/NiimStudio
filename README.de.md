@@ -35,11 +35,6 @@
 
 <p align="center">
   <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Bei GitHub herunterladen"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Mit Obtainium installieren"></a>
-</p>
-
-<p align="center">
-  <img src="docs/media/teaser-de.gif" width="320" alt="NiimStudio in Aktion: ein Etikett mit Herz-Symbol, zweizeiligem Text und QR-Code wird gestaltet, ausgerichtet und in der Vorschau gezeigt">
 </p>
 
 ## <img src="docs/media/icons/features.svg" width="26" align="top" alt=""> Funktionen
@@ -73,19 +68,8 @@ NiimStudio läuft ab **Android 8.0** und braucht Bluetooth. Wähle den Weg, der 
 | | So geht's | Updates |
 |---|---|---|
 | **GitHub Releases** | `NiimStudio-<version>-release.apk` aus dem [neuesten Release](https://github.com/Valinok/NiimStudio/releases/latest) laden und öffnen. | manuell |
-| **Obtainium** | NiimStudio mit einem Tipp [zu Obtainium hinzufügen](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio). | automatisch |
 | **Komi Store** | Im [Komi Store](https://github.com/komi-store/komi-store) (früher GitHub Store) nach **NiimStudio** suchen. | automatisch |
 | **F-Droid** | Demnächst. | automatisch |
-
-<details>
-<summary><b>Mit Obtainium installieren</b></summary>
-
-1. [Obtainium](https://github.com/ImranR98/Obtainium) installieren (über F-Droid oder die GitHub-Releases).
-2. Am Handy oben auf das Badge **Get it on Obtainium** tippen – oder in Obtainium **App hinzufügen** wählen und
-   `https://github.com/Valinok/NiimStudio` einfügen.
-3. **Installieren** tippen. Obtainium prüft GitHub auf neue Versionen und bietet jedes Update an.
-
-</details>
 
 <details>
 <summary><b>Mit Komi Store installieren</b></summary>
@@ -184,20 +168,10 @@ Einmalig einrichten: die Repository-Secrets `NIIMSTUDIO_KEYSTORE_BASE64`, `NIIMS
 
 </details>
 <details>
-<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Teaser-GIF, Screenshots und README-Grafiken aktualisieren</b></summary>
+<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Store-Screenshots und README-Grafiken aktualisieren</b></summary>
 
-Teaser und Store-Screenshots werden automatisch im Emulator aufgenommen. Das Skript installiert die
-Debug-APK, spielt per adb ein Storyboard ab (über sprachunabhängige Test-Tags), nimmt den Bildschirm auf und
-macht daraus ein optimiertes GIF im Handy-Rahmen.
-
-```bash
-python tools/teaser/record.py --build              # Englisch + Deutsch, braucht adb, ffmpeg und Pillow
-python tools/teaser/record.py --lang de            # nur eine Sprache
-python tools/teaser/record.py --gif-only           # GIFs aus der letzten Aufnahme neu rendern
-python tools/readme/make_assets.py                 # Banner, Icons, Flaggen, Store-Icon und Feature-Grafik
-```
-
-Ergebnis: `docs/media/teaser-<lang>.gif` und `fastlane/metadata/android/<locale>/images/`.
+Die Store-Screenshots werden auf einem Telefon aufgenommen und auf 720×1600 skaliert. Die README-Grafiken
+(Banner, Icons, Flaggen) erzeugt `python tools/readme/make_assets.py`.
 
 </details>
 

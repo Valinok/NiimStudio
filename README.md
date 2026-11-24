@@ -35,11 +35,6 @@
 
 <p align="center">
   <a href="https://github.com/Valinok/NiimStudio/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" height="60" alt="Get it on GitHub"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Get it on Obtainium"></a>
-</p>
-
-<p align="center">
-  <img src="docs/media/teaser-en.gif" width="320" alt="NiimStudio in action: a label with a heart symbol, two-line text and a QR code is designed, aligned and previewed">
 </p>
 
 ## <img src="docs/media/icons/features.svg" width="26" align="top" alt=""> Features
@@ -73,19 +68,8 @@ NiimStudio runs on **Android 8.0 or newer** and needs Bluetooth. Pick whichever 
 | | How | Updates |
 |---|---|---|
 | **GitHub Releases** | Download `NiimStudio-<version>-release.apk` from the [latest release](https://github.com/Valinok/NiimStudio/releases/latest) and open it. | manual |
-| **Obtainium** | [Add NiimStudio to Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Valinok/NiimStudio) with one tap. | automatic |
 | **Komi Store** | Search for **NiimStudio** in [Komi Store](https://github.com/komi-store/komi-store) (formerly GitHub Store). | automatic |
 | **F-Droid** | Coming soon. | automatic |
-
-<details>
-<summary><b>Install with Obtainium</b></summary>
-
-1. Install [Obtainium](https://github.com/ImranR98/Obtainium) (from F-Droid or its GitHub releases).
-2. On your phone, tap the **Get it on Obtainium** badge above – or open Obtainium, tap **Add app** and paste
-   `https://github.com/Valinok/NiimStudio`.
-3. Tap **Install**. Obtainium checks GitHub for new versions and offers each update.
-
-</details>
 
 <details>
 <summary><b>Install with Komi Store</b></summary>
@@ -184,20 +168,10 @@ One-time setup: the repository secrets `NIIMSTUDIO_KEYSTORE_BASE64`, `NIIMSTUDIO
 
 </details>
 <details>
-<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Update the teaser GIF, screenshots and README graphics</b></summary>
+<summary><img src="docs/media/icons/film.svg" width="18" align="top" alt=""> <b>Update the store screenshots and README graphics</b></summary>
 
-The teaser and the store screenshots are recorded automatically on an emulator. The script installs the
-debug APK, plays a storyboard through adb (language-independent test tags), records the screen and turns it
-into an optimised GIF inside a phone frame.
-
-```bash
-python tools/teaser/record.py --build              # English + German, needs adb, ffmpeg and Pillow
-python tools/teaser/record.py --lang de            # one language only
-python tools/teaser/record.py --gif-only           # re-render the GIFs from the last recording
-python tools/readme/make_assets.py                 # banner, icons, flags, store icon and feature graphic
-```
-
-Outputs: `docs/media/teaser-<lang>.gif` and `fastlane/metadata/android/<locale>/images/`.
+Store screenshots are captured on a phone and scaled to 720×1600. README graphics (banner, icons, flags)
+are generated with `python tools/readme/make_assets.py`.
 
 </details>
 
