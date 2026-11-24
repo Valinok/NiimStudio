@@ -1,0 +1,1 @@
+0.7.2: D110_M prints exactly the requested number of copies (verified protocol sequence); printer disconnection is detected in about 2 seconds; counter preview is unlimited, the current number can be typed in, advances by 1 after printing and is remembered on exit.
