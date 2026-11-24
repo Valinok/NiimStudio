@@ -1,6 +1,6 @@
 {
   "repo": {
-    "timestamp": 1795523741442,
+    "timestamp": 1795527749463,
     "version": 30000,
     "name": "NiimStudio fork repository",
     "icon": "icon.png",
@@ -24,16 +24,16 @@
       "name": "NiimStudio",
       "sourceCode": "https://github.com/Valinok/NiimStudio",
       "summary": "Design and print labels on NIIMBOT printers",
-      "suggestedVersionCode": "9",
-      "suggestedVersionName": "0.7.1",
+      "suggestedVersionCode": "10",
+      "suggestedVersionName": "0.7.2",
       "webSite": "https://github.com/Valinok/NiimStudio",
       "added": 1795522313434,
       "icon": "icon.png",
       "packageName": "io.github.tobsef.niimstudio",
-      "lastUpdated": 1795522313434,
+      "lastUpdated": 1795527749463,
       "localized": {
         "en-US": {
-          "whatsNew": "0.7.1: Russian UI, bottom panel stays stable with the keyboard open, Bluetooth/printing and cancel fixes. Proprietary fonts and traced icons removed."
+          "whatsNew": "0.7.2: D110_M prints exactly the requested number of copies (verified protocol sequence); printer disconnection is detected in about 2 seconds; counter preview is unlimited, the current number can be typed in, advances by 1 after printing and is remembered on exit."
         }
       }
     }
@@ -41,16 +41,16 @@
   "packages": {
     "io.github.tobsef.niimstudio": [
       {
-        "added": 1795522313434,
-        "apkName": "NiimStudio-0.7.1-release.apk",
-        "hash": "cd0b21a251185b6ab2ccc30a7837764e5a8683fda35d181c0d2791eac6c8e399",
+        "added": 1795527749463,
+        "apkName": "NiimStudio-0.7.2-release.apk",
+        "hash": "835a99410121d74d8c7d45bed60d3a3050a4375c36bc21c55127f4a4ad2d4bb7",
         "hashType": "sha256",
         "minSdkVersion": 26,
         "targetSdkVersion": 35,
         "packageName": "io.github.tobsef.niimstudio",
         "sig": "17404e732111c138",
         "signer": "f04731c891ebfb25cd323255d0e873c950ccff3386a46c069b8d02d38c12f733",
-        "size": 1894630,
+        "size": 1895922,
         "uses-permission": [
           [
             "android.permission.BLUETOOTH",
@@ -77,8 +77,8 @@
             null
           ]
         ],
-        "versionCode": 9,
-        "versionName": "0.7.1"
+        "versionCode": 10,
+        "versionName": "0.7.2"
       }
     ]
   }
