@@ -206,6 +206,7 @@ Ergebnis: `docs/media/teaser-<lang>.gif` und `fastlane/metadata/android/<locale>
 Öffentliche Repositories, die bei den Änderungen in diesem Fork verwendet wurden:
 
 - [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio) — Upstream-Projekt, auf dem dieser Fork basiert.
+- [KunalBhargava182/OpenNiimbot-NiimBridge](https://github.com/KunalBhargava182/OpenNiimbot-NiimBridge) — MIT-Treiber und D110M_V4-Drucksequenz als Protokollreferenz für die Drucker-Korrekturen.
 - [MultiMote/niimbluelib](https://github.com/MultiMote/niimbluelib) — Druckerprotokoll (MIT).
 - [ZXing](https://github.com/zxing/zxing) — Barcodes und QR-Codes.
 - [BigBadaboom/androidsvg](https://github.com/BigBadaboom/androidsvg) — SVG-Darstellung.

@@ -208,6 +208,7 @@ python tools/readme/make_assets.py                 # баннер, иконки,
 Публичные репозитории, которые использовались при правках в этом форке:
 
 - [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio) — upstream-проект, на котором основан форк.
+- [KunalBhargava182/OpenNiimbot-NiimBridge](https://github.com/KunalBhargava182/OpenNiimbot-NiimBridge) — MIT-драйвер и последовательность печати D110M_V4: основной эталон протокола при правках D110_M.
 - [MultiMote/niimbluelib](https://github.com/MultiMote/niimbluelib) — протокол принтера (MIT).
 - [ZXing](https://github.com/zxing/zxing) — штрихкоды и QR-коды.
 - [BigBadaboom/androidsvg](https://github.com/BigBadaboom/androidsvg) — рендеринг SVG.

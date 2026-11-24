@@ -33,6 +33,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## OpenNiimbot-NiimBridge — protocol reference, no code included
+
+The D110_M print sequence was cross-checked against the byte-verified D110M_V4 driver from
+[OpenNiimbot-NiimBridge](https://github.com/KunalBhargava182/OpenNiimbot-NiimBridge) by Kunal Bhargava (MIT).
+No code from that project is included in this repository.
+
 ## Libraries — Apache License 2.0
 
 | Component | Used for |

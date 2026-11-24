@@ -206,6 +206,7 @@ Outputs: `docs/media/teaser-<lang>.gif` and `fastlane/metadata/android/<locale>/
 Public repositories used for the changes in this fork:
 
 - [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio) — upstream project this fork is based on.
+- [KunalBhargava182/OpenNiimbot-NiimBridge](https://github.com/KunalBhargava182/OpenNiimbot-NiimBridge) — MIT driver and D110M_V4 print sequence used as the protocol reference for the printer fixes.
 - [MultiMote/niimbluelib](https://github.com/MultiMote/niimbluelib) — printer protocol (MIT).
 - [ZXing](https://github.com/zxing/zxing) — barcodes and QR codes.
 - [BigBadaboom/androidsvg](https://github.com/BigBadaboom/androidsvg) — SVG rendering.
