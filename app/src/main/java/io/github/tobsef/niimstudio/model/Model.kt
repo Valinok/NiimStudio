@@ -328,6 +328,8 @@ data class AppSettings(
     val deviceName: String? = null,
     val transport: TransportKind = TransportKind.SPP,
     val autoConnect: Boolean = true,
+    /** Fetch the cloud catalogue automatically whenever a new roll SKU is detected. */
+    val autoCatalog: Boolean = false,
     val keepAlive: Boolean = true,
     val density: Int = 2,
     /** null = automatic by protocol version */

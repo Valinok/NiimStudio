@@ -2,12 +2,16 @@ package io.github.tobsef.niimstudio.ui
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import io.github.tobsef.niimstudio.R
 import io.github.tobsef.niimstudio.model.AppSettings
 import io.github.tobsef.niimstudio.printer.ConnState
 import io.github.tobsef.niimstudio.printer.FailReason
+import io.github.tobsef.niimstudio.protocol.LabelRoll
 import io.github.tobsef.niimstudio.protocol.LabelType
+import io.github.tobsef.niimstudio.protocol.CloudRollColor
+import io.github.tobsef.niimstudio.protocol.OriginalLabels
 import io.github.tobsef.niimstudio.protocol.PrintProgress
 import io.github.tobsef.niimstudio.protocol.PrintStage
 import io.github.tobsef.niimstudio.protocol.PrintVariant
@@ -25,6 +29,79 @@ fun labelTypeRes(id: Int): Int = when (id) {
     LabelType.HEAT_SHRINK_TUBE -> R.string.label_type_tube
     else -> R.string.label_type_unknown
 }
+
+/** Names of the original roll materials, keyed by the code in OriginalLabels. */
+fun originalLabelRes(code: Int): Int = when (code) {
+    OriginalLabels.THERMAL_SYNTHETIC -> R.string.mat_thermal_synthetic
+    OriginalLabels.PVC_TAG -> R.string.mat_pvc_tag
+    OriginalLabels.SYNTHETIC_PAPER -> R.string.mat_synthetic_paper
+    OriginalLabels.DT_CARDBOARD -> R.string.mat_dt_cardboard
+    OriginalLabels.CLEAR_PET -> R.string.mat_clear_pet
+    OriginalLabels.SEMI_GLOSS_PAPER -> R.string.mat_semi_gloss_paper
+    OriginalLabels.SEMI_GLOSS_CARDBOARD -> R.string.mat_semi_gloss_cardboard
+    OriginalLabels.SILVER_PET -> R.string.mat_silver_pet
+    OriginalLabels.WHITE_PET -> R.string.mat_white_pet
+    OriginalLabels.WHITE_PVC -> R.string.mat_white_pvc
+    OriginalLabels.PREMIUM_DT_PAPER -> R.string.mat_premium_dt_paper
+    OriginalLabels.PP_CARDSTOCK -> R.string.mat_pp_cardstock
+    OriginalLabels.CLEAR_PE -> R.string.mat_clear_pe
+    OriginalLabels.WHITE_PE -> R.string.mat_white_pe
+    OriginalLabels.PEARLIZED_FILM -> R.string.mat_pearlized_film
+    OriginalLabels.TRANSPARENT_THERMAL -> R.string.mat_transparent_thermal
+    OriginalLabels.POLYURETHANE -> R.string.mat_polyurethane
+    OriginalLabels.TRANSPARENT_PP_WRAP -> R.string.mat_transparent_pp_wrap
+    OriginalLabels.NYLON -> R.string.mat_nylon
+    OriginalLabels.THERMAL_RED_PRINT -> R.string.mat_thermal_red_print
+    OriginalLabels.THERMAL_RED_BLACK -> R.string.mat_thermal_red_black
+    OriginalLabels.THERMAL_LOW_TEMP -> R.string.mat_thermal_low_temp
+    OriginalLabels.PET_PAPER -> R.string.mat_pet_paper
+    OriginalLabels.HEAT_SHRINK_TUBE -> R.string.mat_heat_shrink_tube
+    OriginalLabels.TUBE -> R.string.mat_tube
+    else -> R.string.label_type_unknown
+}
+
+/**
+ * Product name taken from the paper-type prefix of the chip serial (or its SKU).
+ * Different products can share the same material `type`, so the material name alone
+ * is not enough to tell them apart.
+ */
+@Composable
+fun rollDisplayName(roll: LabelRoll): String {
+    val byPaperType = when (roll.paperType) {
+        "PC0FB213" -> R.string.roll_yellow_cable
+        "PC0FC113" -> R.string.roll_green
+        "PZ1G4173" -> R.string.roll_white_t12x40
+        else -> null
+    }
+    val bySku = when (roll.barcode) {
+        "6972842743824" -> R.string.roll_yellow_cable
+        "6972842743800" -> R.string.roll_green
+        "01222281" -> R.string.roll_white_t12x40
+        else -> null
+    }
+    return (byPaperType ?: bySku)?.let { stringResource(it) } ?: stringResource(originalLabelRes(roll.type))
+}
+
+/** Translated swatch name for a colour inferred from the cloud catalogue. */
+fun cloudColorRes(color: CloudRollColor): Int = when (color) {
+    CloudRollColor.YELLOW -> R.string.roll_color_yellow
+    CloudRollColor.GREEN -> R.string.roll_color_green
+    CloudRollColor.WHITE -> R.string.roll_color_white
+    CloudRollColor.BLUE -> R.string.roll_color_blue
+    CloudRollColor.RED -> R.string.roll_color_red
+    CloudRollColor.BLACK -> R.string.roll_color_black
+    CloudRollColor.SILVER -> R.string.roll_color_silver
+    CloudRollColor.TRANSPARENT -> R.string.roll_color_transparent
+    CloudRollColor.PEARL -> R.string.roll_color_pearl
+    CloudRollColor.UNKNOWN -> R.string.roll_color_unknown
+}
+
+/** `SKU …` on one line and the full chip SN on the next. */
+fun rollIdsText(ctx: Context, roll: LabelRoll): String =
+    ctx.getString(R.string.roll_ids, roll.barcode ?: "—", roll.serial ?: "—")
+
+@Composable
+fun rollIdsText(roll: LabelRoll): String = rollIdsText(LocalContext.current, roll)
 
 fun variantRes(v: PrintVariant): Int = when (v) {
     PrintVariant.V3 -> R.string.variant_v3
@@ -84,6 +161,8 @@ private val printerErrorRes = mapOf(
     0x0A to R.string.perr_no_head, 0x0B to R.string.perr_temp_low, 0x0C to R.string.perr_head_loose,
     0x0D to R.string.perr_no_ribbon, 0x0E to R.string.perr_wrong_ribbon, 0x0F to R.string.perr_used_ribbon,
     0x10 to R.string.perr_wrong_paper, 0x16 to R.string.perr_communication, 0x32 to R.string.perr_illegal_page,
+    0x14 to R.string.perr_write_rfid_fail, 0x1D to R.string.perr_rfid_tag_not_written,
+    0x22 to R.string.perr_rfid_write_unsupported,
     0x34 to R.string.perr_timeout, 0x35 to R.string.perr_non_dedicated_ribbon,
 )
 

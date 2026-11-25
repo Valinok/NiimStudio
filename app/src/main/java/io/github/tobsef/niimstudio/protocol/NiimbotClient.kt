@@ -1,6 +1,7 @@
 package io.github.tobsef.niimstudio.protocol
 
 import io.github.tobsef.niimstudio.transport.Transport
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -179,6 +180,21 @@ class NiimbotClient(private val transport: Transport, private val log: (String) 
         setOf(Rsp.HEARTBEAT_ADV1, Rsp.HEARTBEAT_BASIC, Rsp.HEARTBEAT_INFO, Rsp.HEARTBEAT_ADV2),
         timeoutMs,
     )
+
+    /** Reads the loaded label roll from its RFID tag. null = no readable tag or unsupported. */
+    suspend fun getRoll(): LabelRoll? = try {
+        val r = request(NiimbotPacket(Cmd.RFID_INFO, byteArrayOf(1)), setOf(Rsp.RFID_INFO))
+        log("RFID raw: ${r.data.toHex()}")
+        val roll = LabelRoll.parse(r.data)
+        log("Label roll: $roll")
+        roll
+    } catch (e: CancellationException) {
+        // Cancellation is control flow, not a read failure: let callers stop too.
+        throw e
+    } catch (e: Exception) {
+        log("RFID read failed: ${e.message}")
+        null
+    }
 
     // ---- print primitives ----
 

@@ -6,6 +6,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import io.github.tobsef.niimstudio.R
 import android.content.Intent
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -64,6 +66,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tobsef.niimstudio.BuildConfig
@@ -79,6 +83,7 @@ import io.github.tobsef.niimstudio.protocol.PrintOptions
 import io.github.tobsef.niimstudio.protocol.PrintVariant
 import io.github.tobsef.niimstudio.protocol.autoPrintVariant
 import io.github.tobsef.niimstudio.protocol.PrinterInfo
+import io.github.tobsef.niimstudio.protocol.RollCatalog
 import io.github.tobsef.niimstudio.render.Renderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -145,24 +150,26 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: () -> Unit, requestPermissions: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: () -> Unit, requestPermissions: () -> Unit, scrollState: ScrollState) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val s by Store.settings.collectAsState()
     val conn by PrinterManager.state.collectAsState()
+    val status by PrinterManager.status.collectAsState()
+    val printing by PrinterManager.printing.collectAsState()
+    val roll by PrinterManager.roll.collectAsState()
+    val catalog by PrinterManager.catalog.collectAsState()
     val profiles by Store.profiles.collectAsState()
     var scanOpen by remember { mutableStateOf(false) }
+    var labelsOpen by remember { mutableStateOf(false) }
     var variantMenu by remember { mutableStateOf(false) }
     var rotationMenu by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var catalogMessage by remember { mutableStateOf<String?>(null) }
     val logSize = PrinterManager.log.collectAsState().value.size
 
     SubScreen(stringResource(R.string.settings), onBack) { mod ->
-        Column(mod.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-            Card(stringResource(R.string.section_language)) {
-                LanguagePicker()
-            }
-
+        Column(mod.fillMaxSize().verticalScroll(scrollState).padding(bottom = 24.dp)) {
             Card(stringResource(R.string.section_printer)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     val col = when (conn) {
@@ -171,9 +178,19 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                         is ConnState.Failed -> AppColors.Accent
                         ConnState.Disconnected -> AppColors.TextGrey
                     }
-                    Icon(Icons.Filled.Bluetooth, null, tint = col, modifier = Modifier.size(32.dp))
+                    PrinterStatusImage(
+                        status = status,
+                        led = ledState(conn, printing, status),
+                        modifier = Modifier.size(width = 72.dp, height = 88.dp),
+                    )
+                    // Each line is capped at one line so the status flags appearing
+                    // cannot grow the row and push the whole interface down.
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                        Text(s.deviceName ?: stringResource(R.string.conn_no_printer), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            s.deviceName ?: stringResource(R.string.conn_no_printer),
+                            fontSize = 16.sp, fontWeight = FontWeight.Medium,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
                         Text(
                             when (val c = conn) {
                                 is ConnState.Connected -> stringResource(R.string.settings_connected_info, printerSummary(c.info))
@@ -182,6 +199,21 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                                 ConnState.Disconnected -> s.deviceAddress ?: stringResource(R.string.settings_tap_search)
                             },
                             fontSize = 12.sp, color = col,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                        // Keep this line in the layout even when there are no flags:
+                        // otherwise opening the lid adds a line and shifts everything below.
+                        val flags = mutableListOf<String>()
+                        if (conn is ConnState.Connected) {
+                            if (status?.lidClosed == false) flags += stringResource(R.string.status_lid_open)
+                            if (status?.paperInserted == false) flags += stringResource(R.string.status_no_paper)
+                            if (status?.rfidOk == false) flags += stringResource(R.string.status_no_rfid)
+                        }
+                        Text(
+                            flags.joinToString(" · ").ifEmpty { " " },
+                            fontSize = 11.sp,
+                            color = if (flags.isEmpty()) Color.Transparent else AppColors.Accent,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
                         )
                     }
                     if (conn is ConnState.Connecting) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
@@ -224,6 +256,93 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                 }
             }
 
+            Card(stringResource(R.string.section_roll)) {
+                Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    LabelRollImage(roll, Modifier.size(width = 56.dp, height = 92.dp), catalog)
+                    Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                        val currentRoll = roll
+                        Text(
+                            currentRoll?.let { rollDisplayName(it) } ?: stringResource(R.string.roll_no_chip),
+                            fontSize = 15.sp, fontWeight = FontWeight.Medium,
+                        )
+                        if (currentRoll != null) {
+                            Text(stringResource(R.string.roll_material_code, currentRoll.type), fontSize = 12.sp, color = AppColors.TextGrey)
+                            Text(rollIdsText(currentRoll), fontSize = 11.sp, color = AppColors.TextGrey)
+                            catalog?.let { c ->
+                                Text(
+                                    stringResource(R.string.catalog_name, c.nameFor(L10n.locale().language) ?: c.name ?: "—"),
+                                    fontSize = 11.sp, color = AppColors.TextGrey,
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    stringResource(R.string.roll_color) + ": " + rollColorName(currentRoll, catalog),
+                                    fontSize = 12.sp, color = AppColors.TextGrey,
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Box(Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(rollColor(currentRoll, catalog)))
+                                // The catalogue picture is placed right after the colour square.
+                                if (!catalog?.previewImage.isNullOrEmpty()) {
+                                    Spacer(Modifier.width(8.dp))
+                                    CatalogRollImage(catalog?.previewImage, Modifier.size(width = 72.dp, height = 28.dp)) {}
+                                }
+                            }
+                            Text(
+                                stringResource(R.string.roll_remaining_of, currentRoll.remaining, currentRoll.total),
+                                fontSize = 12.sp, color = AppColors.Ok,
+                            )
+                        } else {
+                            Text(stringResource(R.string.roll_auto_hint), fontSize = 11.sp, color = AppColors.TextGrey)
+                        }
+                    }
+                }
+                Text(
+                    stringResource(R.string.catalog_lookup, "print.niimbot.com"),
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                catalogMessage = ctx.getString(R.string.catalog_reading)
+                                catalogMessage = readCatalog(ctx)
+                            }
+                        },
+                    ) { Text(stringResource(R.string.catalog_read), maxLines = 1) }
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        stringResource(R.string.catalog_auto),
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        textAlign = TextAlign.End,
+                    )
+                    Switch(
+                        checked = s.autoCatalog,
+                        onCheckedChange = { enabled ->
+                            Store.updateSettings { it.copy(autoCatalog = enabled) }
+                            // Persist immediately, so the switch survives a reboot. Do the
+                            // synchronous write off the UI thread to avoid a visible jank.
+                            scope.launch(Dispatchers.IO) { Store.flushSettings() }
+                        },
+                    )
+                }
+                catalogMessage?.let {
+                    Text(
+                        it, fontSize = 11.sp, color = AppColors.TextGrey,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
+            }
+
             Card(stringResource(R.string.section_print)) {
                 SectionLabel(stringResource(R.string.default_density))
                 Segmented((1..5).map { it to it.toString() }, s.density, { v -> Store.updateSettings { it.copy(density = v) } })
@@ -255,27 +374,55 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
 
             Card(stringResource(R.string.section_editor)) {
                 NavRow(stringResource(R.string.label_profiles), "${profiles.size}") { onOpenProfiles() }
+                NavRow(
+                    stringResource(R.string.original_labels_title),
+                    "${io.github.tobsef.niimstudio.protocol.OriginalLabels.codes.size}",
+                ) { labelsOpen = true }
                 SwitchRow(stringResource(R.string.snapping), s.snapping, { v -> Store.updateSettings { it.copy(snapping = v) } }, subtitle = stringResource(R.string.snapping_hint))
             }
 
             Card(stringResource(R.string.section_diagnostics)) {
                 NavRow(stringResource(R.string.log_title_long), pluralStringResource(R.plurals.log_lines, logSize, logSize)) { onOpenLog() }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
-                    OutlinedButton(onClick = {
-                        scope.launch {
-                            message = PrinterManager.refreshInfo()?.let { printerSummary(it) } ?: ctx.getString(R.string.not_connected)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp),
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                            scope.launch {
+                                val info = PrinterManager.refreshInfo()
+                                val rollNow = PrinterManager.roll.value
+                                message = if (info == null) ctx.getString(R.string.not_connected)
+                                else buildString {
+                                    append(printerSummary(info))
+                                    rollNow?.let { append('\n').append(rollIdsText(ctx, it)) }
+                                }
+                            }
+                        }) { Text(stringResource(R.string.query_status), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                            scope.launch {
+                                val r = PrinterManager.refreshRoll()
+                                message = r?.let { ctx.getString(R.string.roll_remaining_of, it.remaining, it.total) }
+                                    ?: ctx.getString(R.string.roll_not_readable)
+                            }
+                        }) { Text(stringResource(R.string.refresh_roll), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = {
+                            scope.launch {
+                                message = printTestPattern(ctx)
+                            }
+                        }) {
+                            Icon(Icons.Filled.Print, null)
+                            Text(" " + stringResource(R.string.test_pattern))
                         }
-                    }) { Text(stringResource(R.string.query_status)) }
-                    OutlinedButton(onClick = {
-                        scope.launch {
-                            message = printTestPattern(ctx)
-                        }
-                    }) {
-                        Icon(Icons.Filled.Print, null)
-                        Text(" " + stringResource(R.string.test_pattern))
                     }
                 }
                 message?.let { Text(it, fontSize = 12.sp, color = AppColors.TextGrey, modifier = Modifier.padding(bottom = 8.dp)) }
+            }
+
+            Card(stringResource(R.string.section_language)) {
+                LanguagePicker()
             }
 
             Card(stringResource(R.string.section_info)) {
@@ -287,6 +434,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
             }
         }
     }
+
+    if (labelsOpen) OriginalLabelsDialog(roll, catalog, onDismiss = { labelsOpen = false })
 
     if (scanOpen) DeviceScanDialog(onDismiss = { scanOpen = false }) { d ->
         Store.updateSettings { it.copy(deviceAddress = d.address, deviceName = d.name) }
@@ -319,6 +468,40 @@ private suspend fun printTestPattern(ctx: android.content.Context): String {
         ?: autoPrintVariant(info)
     PrinterManager.print(listOf(img), PrintOptions(density = s.density, labelType = p.labelType, variant = variant, printheadPixels = s.printheadDots, useIndexedRows = s.indexedRows))
     return ctx.getString(R.string.test_pattern_sent, p.name, variant.name)
+}
+
+/** Reads the loaded roll's catalogue entry by SKU and returns a compact result for the UI. */
+private suspend fun readCatalog(ctx: android.content.Context): String {
+    val sku = PrinterManager.roll.value?.barcode
+    if (sku.isNullOrEmpty()) return ctx.getString(R.string.catalog_no_sku)
+    return try {
+        val c = RollCatalog.fetch(sku)
+        // The roll could have been swapped while the request was in flight.
+        if (PrinterManager.roll.value?.barcode != sku) {
+            return ctx.getString(R.string.catalog_error) + ": SKU changed"
+        }
+        PrinterManager.applyCatalog(c)
+        // Logged for passive logcat inspection; only the SKU was sent.
+        PrinterManager.log(
+            "Catalog SKU $sku: name=${c.name}, names=${c.localizedNames}, " +
+                "color=${c.color}, cable=${c.cable}, length=${c.cableLength}, " +
+                "width=${c.width}, height=${c.height}, " +
+                "consumableType=${c.consumableType} (${c.consumableTypeTextId}), " +
+                "sceneTags=${c.sceneTags}",
+        )
+        buildString {
+            append(ctx.getString(R.string.catalog_color)).append(": ")
+            append(ctx.getString(cloudColorRes(c.color)))
+            // Cable is a cloud property; keep the word and length, drop the yes/no value.
+            if (c.cable) {
+                append(" · ").append(ctx.getString(R.string.catalog_cable))
+                c.cableLength?.let { append(" (").append(it).append(" mm)") }
+            }
+        }
+    } catch (e: Exception) {
+        PrinterManager.log("Catalog error for $sku: ${e.message}")
+        ctx.getString(R.string.catalog_error) + ": " + (e.message ?: e.javaClass.simpleName)
+    }
 }
 
 @Composable

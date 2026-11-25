@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -34,6 +36,7 @@ import java.io.IOException
 object Store {
     /** Serial writes, so a rapid sequence of settings changes cannot reorder the files. */
     private val writeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+    private val writeMutex = Mutex()
     private var settingsJob: Job? = null
 
     val json = Json {
@@ -114,14 +117,23 @@ object Store {
         settingsJob?.cancel()
         settingsJob = writeScope.launch {
             delay(400)
-            writeJson(File(dir, "settings.json"), s)
+            writeMutex.withLock {
+                // A newer change or an explicit flush may have won in the meantime.
+                if (_settings.value == s) writeJson(File(dir, "settings.json"), s)
+            }
         }
     }
 
-    /** Flushes a pending debounced write when the activity stops. */
+    /**
+     * Flushes a pending debounced write immediately. The mutex serializes it with any write that
+     * already passed its delay, so two jobs cannot race over settings.json.tmp. Callers on the UI
+     * thread should dispatch this to IO; onStop keeps the direct call to make persistence final.
+     */
     fun flushSettings() {
         settingsJob?.cancel()
-        runBlocking(Dispatchers.IO + NonCancellable) { writeJson(File(dir, "settings.json"), _settings.value) }
+        runBlocking(Dispatchers.IO + NonCancellable) {
+            writeMutex.withLock { writeJson(File(dir, "settings.json"), _settings.value) }
+        }
     }
 
     // ---- profiles

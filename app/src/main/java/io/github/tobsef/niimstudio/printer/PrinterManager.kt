@@ -15,22 +15,29 @@ import android.content.pm.PackageManager
 import android.os.Build
 import io.github.tobsef.niimstudio.data.Store
 import io.github.tobsef.niimstudio.model.TransportKind
+import io.github.tobsef.niimstudio.protocol.CloudRoll
 import io.github.tobsef.niimstudio.protocol.EncodedImage
+import io.github.tobsef.niimstudio.protocol.LabelRoll
 import io.github.tobsef.niimstudio.protocol.NiimbotClient
 import io.github.tobsef.niimstudio.protocol.PrintJob
 import io.github.tobsef.niimstudio.protocol.PrintOptions
 import io.github.tobsef.niimstudio.protocol.PrintProgress
 import io.github.tobsef.niimstudio.protocol.PrintStage
 import io.github.tobsef.niimstudio.protocol.PrinterInfo
+import io.github.tobsef.niimstudio.protocol.PrinterStatus
+import io.github.tobsef.niimstudio.protocol.RollCatalog
+import io.github.tobsef.niimstudio.protocol.Rsp
 import io.github.tobsef.niimstudio.transport.BleTransport
 import io.github.tobsef.niimstudio.transport.SppTransport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,6 +59,7 @@ sealed class ConnState {
 private const val HEARTBEAT_INTERVAL_MS = 1_000L
 private const val HEARTBEAT_TIMEOUT_MS = 1_000L
 private const val HEARTBEAT_FAILURES_TO_DISCONNECT = 2
+private const val ROLL_POLL_INTERVAL_MS = 4_000L
 
 /** App-wide printer connection, keep-alive and print execution. */
 @SuppressLint("MissingPermission")
@@ -68,14 +76,31 @@ object PrinterManager {
     private val _printing = MutableStateFlow<PrintProgress?>(null)
     val printing: StateFlow<PrintProgress?> = _printing
 
+    private val _roll = MutableStateFlow<LabelRoll?>(null)
+    val roll: StateFlow<LabelRoll?> = _roll
+
+    /** Catalogue metadata for the roll currently in the printer, fetched by SKU only. */
+    private val _catalog = MutableStateFlow<CloudRoll?>(null)
+    val catalog: StateFlow<CloudRoll?> = _catalog
+
+    private val _status = MutableStateFlow<PrinterStatus?>(null)
+    val status: StateFlow<PrinterStatus?> = _status
+
     private var client: NiimbotClient? = null
     private var heartbeatJob: Job? = null
+    private var rollWatchJob: Job? = null
+    private var catalogWatchJob: Job? = null
+    private var lastAutoCatalogSku: String? = null
     private var printJob: Job? = null
     private var connectJob: Job? = null
     private val timeFmt = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
 
     val isConnected get() = _state.value is ConnState.Connected
     val info get() = (state.value as? ConnState.Connected)?.info
+
+    init {
+        startCatalogWatch()
+    }
 
     fun log(msg: String) {
         android.util.Log.d("NiimStudio", msg)
@@ -149,10 +174,8 @@ object PrinterManager {
                 log("Connection closed${err?.let { ": ${it.message}" } ?: ""}")
                 if (client === c) {
                     client = null
-                    heartbeatJob?.cancel()
-                    // A powered-off printer must not leave a stuck progress dialog behind.
-                    printJob?.cancel()
-                    _printing.value = null
+                    // A powered-off printer must not leave stale roll/catalogue data behind.
+                    resetConnectionState()
                     _state.value = ConnState.Disconnected
                 }
             }
@@ -160,6 +183,8 @@ object PrinterManager {
             log("Printer: $info")
             _state.value = ConnState.Connected(name, info)
             startHeartbeat(c)
+            startRollWatch(c)
+            refreshRollFrom(c)
         } catch (e: Exception) {
             log("Connect failed: ${e.message}")
             c.close()
@@ -174,10 +199,20 @@ object PrinterManager {
         scope.launch { connectLock.withLock { closeClient() } }
     }
 
-    private fun closeClient() {
+    /** Single place for all per-connection state, used by disconnect and by transport close. */
+    private fun resetConnectionState() {
         heartbeatJob?.cancel()
+        rollWatchJob?.cancel()
         printJob?.cancel()
         _printing.value = null
+        _roll.value = null
+        _catalog.value = null
+        lastAutoCatalogSku = null
+        _status.value = null
+    }
+
+    private fun closeClient() {
+        resetConnectionState()
         client?.let {
             log("Disconnect")
             it.close()
@@ -190,11 +225,19 @@ object PrinterManager {
         heartbeatJob?.cancel()
         heartbeatJob = scope.launch {
             var failures = 0
+            var lastRfidOk: Boolean? = null
             while (isActive) {
                 delay(HEARTBEAT_INTERVAL_MS)
                 if (!Store.settings.value.keepAlive || _printing.value != null || client !== c) continue
                 try {
-                    c.heartbeat(HEARTBEAT_TIMEOUT_MS)
+                    val hb = c.heartbeat(HEARTBEAT_TIMEOUT_MS)
+                    if (hb.command == Rsp.HEARTBEAT_ADV2) {
+                        val st = PrinterStatus.parse(hb.data)
+                        _status.value = st
+                        // Fast path: the printer reports a freshly read chip right after insertion.
+                        if (st?.rfidOk == true && lastRfidOk == false) refreshRollFrom(c)
+                        lastRfidOk = st?.rfidOk
+                    }
                     failures = 0
                 } catch (e: Exception) {
                     if (++failures < HEARTBEAT_FAILURES_TO_DISCONNECT) {
@@ -215,8 +258,12 @@ object PrinterManager {
         return try {
             val hb = c.heartbeat()
             log("Heartbeat %02X: %s".format(hb.command, hb.data.joinToString(" ") { "%02X".format(it) }))
+            if (hb.command == Rsp.HEARTBEAT_ADV2) {
+                _status.value = PrinterStatus.parse(hb.data)
+            }
             val info = c.negotiate()
             (_state.value as? ConnState.Connected)?.let { _state.value = it.copy(info = info) }
+            refreshRollFrom(c)
             info
         } catch (e: Exception) {
             log("Status failed: ${e.message}")
@@ -224,14 +271,115 @@ object PrinterManager {
         }
     }
 
+    /** Attaches catalogue data to the loaded roll; cleared when a different SKU appears. */
+    fun applyCatalog(catalog: CloudRoll?) {
+        _catalog.value = catalog
+        log("Catalog applied: ${catalog?.name ?: "cleared"}")
+    }
+
+    /**
+     * With automatic reading enabled, loads the catalogue once per SKU of the detected
+     * roll. No serial number, UUID or device id is sent — only the SKU.
+     */
+    private fun startCatalogWatch() {
+        catalogWatchJob?.cancel()
+        catalogWatchJob = scope.launch {
+            combine(Store.settings, _roll) { settings, roll -> settings.autoCatalog to roll?.barcode }
+                .collect { (enabled, sku) ->
+                    if (!enabled || sku.isNullOrEmpty()) {
+                        lastAutoCatalogSku = null
+                        return@collect
+                    }
+                    if (sku == lastAutoCatalogSku) return@collect
+                    lastAutoCatalogSku = sku
+                    var attempt = 0
+                    while (attempt < 2 && isActive) {
+                        attempt++
+                        try {
+                            val c = RollCatalog.fetch(sku)
+                            // The roll or the switch may have changed while the request ran.
+                            if (_roll.value?.barcode != sku || !Store.settings.value.autoCatalog) {
+                                log("Catalog auto discarded for $sku: roll or setting changed")
+                                break
+                            }
+                            applyCatalog(c)
+                            log(
+                                "Catalog auto SKU $sku: name=${c.name}, color=${c.color}, " +
+                                    "cable=${c.cable}, length=${c.cableLength}",
+                            )
+                            break
+                        } catch (e: Exception) {
+                            if (attempt == 2) {
+                                // Allow a retry when this SKU is seen again after a failure.
+                                if (lastAutoCatalogSku == sku) lastAutoCatalogSku = null
+                                log("Catalog auto error for $sku: ${e.message}")
+                            } else {
+                                delay(1_000)
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+    /** Manual reread of the roll; keeps the last known value when the tag cannot be read. */
+    suspend fun refreshRoll(): LabelRoll? {
+        val c = client ?: return null
+        return refreshRollFrom(c)
+    }
+
+    private suspend fun refreshRollFrom(c: NiimbotClient): LabelRoll? = applyRoll(c.getRoll())
+
+    private fun applyRoll(roll: LabelRoll?): LabelRoll? {
+        if (roll == null) {
+            log("Label roll: not readable (last value kept)")
+            return null
+        }
+        val previous = _roll.value
+        if (previous != null && previous.uuid != roll.uuid) {
+            log("Roll changed: ${previous.uuid} -> ${roll.uuid}")
+        }
+        if (previous?.barcode != roll.barcode && _catalog.value != null) {
+            _catalog.value = null
+        }
+        _roll.value = roll
+        log("Label roll: $roll")
+        return roll
+    }
+
+    /** Polls the chip while connected so a newly inserted roll appears without a button press. */
+    private fun startRollWatch(c: NiimbotClient) {
+        rollWatchJob?.cancel()
+        rollWatchJob = scope.launch {
+            while (isActive) {
+                delay(ROLL_POLL_INTERVAL_MS)
+                if (client !== c || _printing.value != null) continue
+                try {
+                    val previous = _roll.value
+                    val roll = c.getRoll()
+                    if (roll != null && (roll.uuid != previous?.uuid || roll.used != previous.used)) {
+                        if (roll.uuid != previous?.uuid) log("Roll auto-detected: ${roll.uuid}")
+                        else log("Remaining auto-updated: ${roll.remaining}/${roll.total}")
+                        applyRoll(roll)
+                    }
+                } catch (e: Exception) {
+                    log("Roll watch failed: ${e.message}")
+                }
+            }
+        }
+    }
+
     fun print(pages: List<EncodedImage>, opts: PrintOptions, onDone: (Throwable?) -> Unit = {}) {
         val c = client ?: return onDone(IllegalStateException("Not connected"))
         if (printJob?.isActive == true) return onDone(IllegalStateException("A print job is already running"))
         c.packetIntervalMs = Store.settings.value.packetDelayMs.toLong()
-        _printing.value = PrintProgress(0, pages.size * opts.copies, PrintStage.STARTING, 0f)
+        val expected = pages.size * opts.copies
+        var rollBefore: LabelRoll? = null
+        _printing.value = PrintProgress(0, expected, PrintStage.STARTING, 0f)
         printJob = scope.launch {
             var error: Throwable? = null
             try {
+                rollBefore = withContext(NonCancellable) { refreshRollFrom(c) } ?: _roll.value
                 PrintJob(c, ::log) { _printing.value = it }.print(pages, opts)
                 log("Print finished")
             } catch (e: Throwable) {
@@ -239,6 +387,18 @@ object PrinterManager {
                 log("PRINT FAILED: ${e.message}")
             } finally {
                 _printing.value = null
+                withContext(NonCancellable) {
+                    val rollAfter = refreshRollFrom(c)
+                    val before = rollBefore
+                    if (before != null && rollAfter != null) {
+                        val delta = rollAfter.used - before.used
+                        if (delta > 0) {
+                            log("Chip counter +$delta (expected $expected), remaining ${rollAfter.remaining}")
+                        } else {
+                            log("Chip counter unchanged after print (expected $expected): no RFID write detected")
+                        }
+                    }
+                }
                 onDone(error)
             }
         }

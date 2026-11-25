@@ -11,10 +11,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val vm: EditorViewModel = viewModel()
                 var screen by rememberSaveable { mutableStateOf("editor") }
+                val settingsScroll = rememberScrollState()
                 val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { res ->
                     if (res.values.all { it }) maybeAutoConnect()
                 }
@@ -75,6 +78,7 @@ class MainActivity : ComponentActivity() {
                             onOpenProfiles = { screen = "profiles" },
                             onOpenLog = { screen = "log" },
                             requestPermissions = requestPermissions,
+                            scrollState = settingsScroll,
                         )
                         "profiles" -> ProfilesScreen(onBack = { screen = "editor" }) { p ->
                             vm.setProfile(p)

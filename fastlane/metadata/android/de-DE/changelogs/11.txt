@@ -1,0 +1,1 @@
+0.7.3: Vollständiger Katalog der Originaletiketten; liest die eingelegte Rolle über RFID (SKU, Seriennummer, Restmenge), bestimmt Farbe und Typ über print.niimbot.com ausschließlich anhand der SKU, mit manueller und automatischer Katalogsuche. Neue Druckerstatus-Diagnose und eigene Vektorgrafiken für Rolle und Drucker.

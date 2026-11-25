@@ -1,0 +1,1 @@
+0.7.3: Full original-label catalogue; reads the installed roll from its RFID chip (SKU, serial, remaining), resolves colour/type from print.niimbot.com by SKU only, with manual and automatic catalogue lookup. Added printer status diagnostics and a vector roll/printer illustration.
