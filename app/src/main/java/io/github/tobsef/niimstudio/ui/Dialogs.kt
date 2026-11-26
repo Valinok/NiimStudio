@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -181,10 +182,13 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
         onDismissRequest = { if (progress == null) onDismiss() },
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Column(
             Modifier.automationIds()
                 .fillMaxWidth()
+                // Keep the panel within the screen; with bottom alignment this shows the title
+                // first and lets long counter content scroll instead of hiding above the screen.
+                .heightIn(max = maxHeight)
                 .verticalScroll(rememberScrollState())
                 .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .padding(horizontal = 20.dp),
@@ -196,14 +200,18 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                 Modifier.fillMaxWidth().padding(vertical = 14.dp).clip(RoundedCornerShape(16.dp)).background(AppColors.CanvasBg).padding(16.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                preview?.let {
-                    Image(
-                        it.asImageBitmap(), stringResource(R.string.print_preview),
-                        Modifier.fillMaxWidth().heightIn(max = 160.dp),
-                        contentScale = ContentScale.Fit,
-                        filterQuality = FilterQuality.None,
-                    )
-                } ?: Box(Modifier.height(80.dp))
+                // Fixed preview box: the placeholder and the rendered bitmap take the same
+                // space, so opening the dialog does not shift the top edge when the render lands.
+                Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
+                    preview?.let {
+                        Image(
+                            it.asImageBitmap(), stringResource(R.string.print_preview),
+                            Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit,
+                            filterQuality = FilterQuality.None,
+                        )
+                    }
+                }
             }
             if (isCounter) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
