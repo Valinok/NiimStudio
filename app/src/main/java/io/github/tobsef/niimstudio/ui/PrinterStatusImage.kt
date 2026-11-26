@@ -90,18 +90,25 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
                     cornerRadius = radius,
                 )
             }
-            // Paper slot.
-            drawRoundRect(
-                color = Color.White,
-                topLeft = Offset(w * 0.24f, bodyHeight * 0.63f),
-                size = Size(w * 0.52f, bodyHeight * 0.12f),
-                cornerRadius = CornerRadius(3f, 3f),
-            )
-            // LED: twice the previous radius, centred on the printer.
+            // Four evenly spaced vertical slots on the front panel.
+            val barWidth = w * 0.07f
+            val barHeight = bodyHeight * 0.12f
+            val gap = w * 0.08f
+            val firstLeft = (w - (4 * barWidth + 3 * gap)) / 2f
+            val barTop = bodyHeight * 0.78f
+            repeat(4) { i ->
+                drawRoundRect(
+                    color = Color.White,
+                    topLeft = Offset(firstLeft + i * (barWidth + gap), barTop),
+                    size = Size(barWidth, barHeight),
+                    cornerRadius = CornerRadius(2f, 2f),
+                )
+            }
+            // LED sits in the centre of the body, not of the canvas with its lid reserve.
             drawCircle(
                 color = color.copy(alpha = alpha),
                 radius = minOf(w, bodyHeight) * 0.10f,
-                center = Offset(w / 2f, bodyHeight / 2f),
+                center = Offset(w / 2f, bodyHeight * 0.63f),
             )
         }
     }
