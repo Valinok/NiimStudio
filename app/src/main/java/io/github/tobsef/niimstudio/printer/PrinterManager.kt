@@ -337,7 +337,7 @@ object PrinterManager {
         }
         val previous = _roll.value
         if (previous != null && previous.uuid != roll.uuid) {
-            log("Roll changed: ${previous.uuid} -> ${roll.uuid}")
+            log("Roll changed: tag UUID differs")
         }
         if (previous?.barcode != roll.barcode && _catalog.value != null) {
             _catalog.value = null
@@ -358,7 +358,7 @@ object PrinterManager {
                     val previous = _roll.value
                     val roll = c.getRoll()
                     if (roll != null && (roll.uuid != previous?.uuid || roll.used != previous.used)) {
-                        if (roll.uuid != previous?.uuid) log("Roll auto-detected: ${roll.uuid}")
+                        if (roll.uuid != previous?.uuid) log("Roll auto-detected (new tag)")
                         else log("Remaining auto-updated: ${roll.remaining}/${roll.total}")
                         applyRoll(roll)
                     }

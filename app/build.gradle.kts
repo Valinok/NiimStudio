@@ -42,15 +42,14 @@ val releaseSigning: Map<String, String>? = run {
 
 android {
     namespace = "io.github.tobsef.niimstudio"
-    compileSdk = 37
-    buildToolsVersion = "36.0.0"
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "io.github.tobsef.niimstudio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "0.7.3"
+        versionCode = 12
+        versionName = "0.7.4"
         buildConfigField("String", "LANGUAGES", "\"${appLanguages.joinToString(",")}\"")
     }
 

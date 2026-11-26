@@ -61,7 +61,12 @@ class NiimbotClient(private val transport: Transport, private val log: (String) 
         transport.open(
             onData = { bytes ->
                 for (p in parser.feed(bytes)) {
-                    log("RX ${p.toBytes().toHex()}  ($p)")
+                    // The RFID reply carries the tag UUID, SKU and full serial; never log it raw.
+                    if (p.command == Rsp.RFID_INFO) {
+                        log("RX ${"%02X".format(p.command)} [redacted ${p.data.size} bytes]")
+                    } else {
+                        log("RX ${p.toBytes().toHex()}  ($p)")
+                    }
                     incoming.trySend(p)
                 }
             },
@@ -184,7 +189,7 @@ class NiimbotClient(private val transport: Transport, private val log: (String) 
     /** Reads the loaded label roll from its RFID tag. null = no readable tag or unsupported. */
     suspend fun getRoll(): LabelRoll? = try {
         val r = request(NiimbotPacket(Cmd.RFID_INFO, byteArrayOf(1)), setOf(Rsp.RFID_INFO))
-        log("RFID raw: ${r.data.toHex()}")
+        log("RFID response: ${r.data.size} bytes")
         val roll = LabelRoll.parse(r.data)
         log("Label roll: $roll")
         roll

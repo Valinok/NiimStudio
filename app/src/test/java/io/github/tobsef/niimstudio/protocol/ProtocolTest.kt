@@ -56,6 +56,23 @@ class ProtocolTest {
     }
 
     @Test
+    fun rollLogRedactsTagIdentifiers() {
+        val roll = LabelRoll(
+            uuid = "0011223344556677",
+            barcode = "6972842743794",
+            serial = "PC0FC13333002140",
+            total = 78,
+            used = 0,
+            type = 1,
+        )
+        val text = roll.toString()
+        assertFalse(text.contains("0011223344556677"))
+        assertFalse(text.contains("PC0FC13333002140"))
+        assertTrue(text.contains("sku=6972842743794"))
+        assertTrue(text.contains("used=0/78"))
+    }
+
+    @Test
     fun rfidChipSerialSplitsPaperTypeAndSerialNumber() {
         val d = hex("00 11 22 33 44 55 66 77") +
             byteArrayOf(8) + "01222281".toByteArray(Charsets.US_ASCII) +

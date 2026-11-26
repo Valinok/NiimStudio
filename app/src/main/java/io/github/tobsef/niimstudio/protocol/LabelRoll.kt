@@ -26,10 +26,10 @@ data class LabelRoll(
     val paperType: String? get() = serial?.takeIf { it.length > 8 }?.substring(0, 8)
     val serialNumber: String? get() = serial?.takeIf { it.length > 8 }?.substring(8) ?: serial
 
+    /** Safe for logs: the tag UUID and full chip serial are identifiers, not diagnostics. */
     override fun toString() = buildString {
-        append("uuid=").append(uuid)
-        barcode?.let { append(" sku=").append(it) }
-        serial?.let { append(" sn=").append(it) }
+        barcode?.let { append("sku=").append(it) }
+        append(" sn=redacted")
         append(" used=").append(used).append('/').append(total)
         append(" left=").append(remaining)
         append(" type=").append(type)
