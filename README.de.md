@@ -6,6 +6,8 @@
   <a href="README.ru.md"><img src="docs/media/flags/ru.svg" height="14" alt=""> Русский</a>
 </p>
 
+> **Korrektur: Das ist kompletter KI-Slop („нейрослоп“), kein sorgfältig geprüfter Fork.**
+
 > **Fork-Hinweis.** Dies ist ein experimenteller Fork von [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio)
 > mit russischer Oberfläche, überarbeiteter unterer Editorleiste und Drucker-Korrekturen. Teile der Änderungen
 > wurden mit KI-Unterstützung erstellt („нейрослоп“) und nicht so gründlich geprüft wie das Original —

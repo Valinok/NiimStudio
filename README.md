@@ -6,6 +6,8 @@
   <a href="README.ru.md"><img src="docs/media/flags/ru.svg" height="14" alt=""> Русский</a>
 </p>
 
+> **Correction: this is complete AI slop ("нейрослоп"), not a carefully reviewed fork.**
+
 > **Fork notice.** This is an experimental fork of [TobseF/NiimStudio](https://github.com/TobseF/NiimStudio)
 > with a Russian UI, a reworked bottom editor panel and printer fixes. Parts of the changes were
 > generated with AI assistance ("нейрослоп") and have not received the same review as upstream — use
