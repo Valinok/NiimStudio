@@ -80,7 +80,6 @@ import android.text.TextPaint
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -526,9 +525,6 @@ fun LabelCanvas(vm: EditorViewModel, modifier: Modifier = Modifier) {
                     textStyle = textStyle,
                     cursorBrush = SolidColor(AppColors.Selection),
                 )
-            }
-            TextButton(onClick = { vm.endInlineEdit() }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-                Text(stringResource(R.string.done))
             }
         }
 

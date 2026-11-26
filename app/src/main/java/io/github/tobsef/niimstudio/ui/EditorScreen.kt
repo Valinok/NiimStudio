@@ -41,6 +41,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -96,11 +97,19 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             IconButton(onClick = vm::undo, enabled = vm.canUndo) { Icon(Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo), Modifier.size(28.dp)) }
             IconButton(onClick = vm::redo, enabled = vm.canRedo) { Icon(Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo), Modifier.size(28.dp)) }
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = { confirmClear = true }, Modifier.testTag("clear_all"), enabled = vm.doc.elements.isNotEmpty()) {
-                Icon(Icons.Outlined.CleaningServices, stringResource(R.string.clear_all), Modifier.size(28.dp))
+            if (vm.inlineEditId != null) {
+                // Keep "Done" in the top bar while typing: a floating button used to
+                // sit on top of the label and its "double tap to edit" hint.
+                Button(onClick = { vm.endInlineEdit() }, modifier = Modifier.height(40.dp)) {
+                    Text(stringResource(R.string.done))
+                }
+            } else {
+                IconButton(onClick = { confirmClear = true }, Modifier.testTag("clear_all"), enabled = vm.doc.elements.isNotEmpty()) {
+                    Icon(Icons.Outlined.CleaningServices, stringResource(R.string.clear_all), Modifier.size(28.dp))
+                }
+                IconButton(onClick = vm::togglePortrait) { Icon(Icons.Outlined.ScreenRotation, stringResource(R.string.rotate_label), Modifier.size(28.dp)) }
+                IconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, stringResource(R.string.settings), Modifier.size(28.dp)) }
             }
-            IconButton(onClick = vm::togglePortrait) { Icon(Icons.Outlined.ScreenRotation, stringResource(R.string.rotate_label), Modifier.size(28.dp)) }
-            IconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, stringResource(R.string.settings), Modifier.size(28.dp)) }
             Box {
                 val connected = conn as? ConnState.Connected
                 val (icon, tint) = when (conn) {
