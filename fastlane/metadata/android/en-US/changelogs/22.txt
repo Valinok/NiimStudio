@@ -1,0 +1,1 @@
+0.7.14: Keep the profile dropdown within its own field so long label names no longer cover the Done button; long names are clipped to two lines.

@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
@@ -150,17 +152,26 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             Modifier.fillMaxWidth().height(44.dp).background(Color.White).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.weight(1f)) {
+            BoxWithConstraints(Modifier.weight(1f)) {
                 Row(Modifier.clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically) {
                     Text(profileName(vm.doc.profile), fontSize = 16.sp, color = Color(0xFF333333), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Icon(Icons.Filled.KeyboardArrowDown, null, tint = Color(0xFF666666))
                 }
-                DropdownMenu(profileMenu, { profileMenu = false }) {
+                DropdownMenu(
+                    expanded = profileMenu,
+                    onDismissRequest = { profileMenu = false },
+                    modifier = Modifier.widthIn(max = maxWidth),
+                ) {
                     for (p in profiles) {
                         DropdownMenuItem(
                             text = {
                                 Column {
-                                    Text(profileName(p), fontWeight = if (p.id == vm.doc.profile.id) FontWeight.SemiBold else FontWeight.Normal)
+                                    Text(
+                                        profileName(p),
+                                        fontWeight = if (p.id == vm.doc.profile.id) FontWeight.SemiBold else FontWeight.Normal,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                     Text(p.sizeLabel, fontSize = 12.sp, color = AppColors.TextGrey)
                                 }
                             },
