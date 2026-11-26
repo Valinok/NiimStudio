@@ -48,10 +48,10 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
     } else null
 
     val color = when (led) {
-        LedState.OFF -> Color(0xFFBDBDC4)
-        LedState.CONNECTING -> Color(0xFFFFB300)
+        LedState.OFF -> AppColors.Neutral
+        LedState.CONNECTING -> AppColors.LedConnecting
         LedState.READY -> AppColors.Ok
-        LedState.PRINTING -> Color(0xFF2F80ED)
+        LedState.PRINTING -> AppColors.LedPrinting
         LedState.ERROR -> AppColors.Accent
     }
     val alpha = blink?.value ?: 1f
@@ -68,7 +68,7 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
 
         // Body.
         drawRoundRect(
-            color = Color(0xFFE7E7ED),
+            color = AppColors.PrinterBody,
             topLeft = Offset(0f, h * 0.26f),
             size = Size(w, h * 0.74f),
             cornerRadius = CornerRadius(10f, 10f),
@@ -84,7 +84,7 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
             pivot = Offset(lidLeft, lidTop + lidHeight), // lower point of the left edge
         ) {
             drawRoundRect(
-                color = Color(0xFFCFCFD8),
+                color = AppColors.PrinterLid,
                 topLeft = Offset(lidLeft, lidTop),
                 size = Size(lidWidth, lidHeight),
                 cornerRadius = radius,

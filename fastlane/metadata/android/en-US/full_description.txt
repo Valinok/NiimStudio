@@ -1,4 +1,4 @@
-<p><b>NiimStudio</b> is a free, open-source label designer for NIIMBOT label printers. Design cable flags, storage labels and price tags on your phone and print them over Bluetooth – no account, no cloud, no ads.</p>
+<p><b>NiimStudio</b> is a free, open-source label designer for NIIMBOT label printers. Design cable flags, storage labels and price tags on your phone and print them over Bluetooth – no account, no ads.</p>
 
 <p><b>Features</b></p>
 <ul>
@@ -8,7 +8,7 @@
 <li><b>Cable labels:</b> 17 connector symbols (USB, HDMI, DisplayPort, RJ45, DC, …) and cable flags that are printed on both sides and wrap around the cable.</li>
 <li><b>Profiles and templates:</b> editable label sizes, layouts saved as templates with a preview.</li>
 <li><b>Batch printing:</b> fill placeholders from a list or CSV, or number labels automatically.</li>
-<li><b>Private by design:</b> works fully offline and does not even request the internet permission.</li>
+<li><b>Private by design:</b> editing and printing work offline. An optional catalogue lookup resolves roll colour and type from NIIMBOT's public catalogue using only the roll SKU; automatic lookup can be turned off.</li>
 <li><b>Printer status at a glance:</b> model, battery level (4 bars) and Bluetooth state in one tappable header block, with firmware and connection details on tap.</li>
 <li>English, German and Russian.</li>
 </ul>

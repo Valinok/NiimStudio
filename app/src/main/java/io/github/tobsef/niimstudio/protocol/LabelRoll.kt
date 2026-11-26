@@ -71,7 +71,13 @@ data class LabelRoll(
             val used = u16be()
             val type = data.u(pos)
             pos++
-            val capacity = if (need(2)) u16be() else null
+            // Firmware variants end here or add exactly the 2-byte capacity; anything
+            // else is a malformed payload and must not be shown as a valid roll.
+            val capacity = when (data.size - pos) {
+                0 -> null
+                2 -> u16be()
+                else -> return null
+            }
 
             return LabelRoll(
                 uuid = uuid,

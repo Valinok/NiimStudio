@@ -84,6 +84,23 @@ object AppColors {
     val Divider = Color(0xFFE6E6EA)
     val Orange = Color(0xFFE29A1B)
     val Ok = Color(0xFF2EB85C)
+
+    // Roll swatches and the printer illustration (all values unchanged, just named).
+    val RollYellow = Color(0xFFF2C230)
+    val RollGreen = Color(0xFF4CAF7A)
+    val RollWhite = Color(0xFFF2F2F2)
+    val RollBlue = Color(0xFF3D7BD6)
+    val RollRed = Color(0xFFD9534F)
+    val RollBlack = Color(0xFF424242)
+    val RollSilver = Color(0xFFBFC3C9)
+    val RollTransparent = Color(0xFFBFE3F2)
+    val RollPearl = Color(0xFFE8DCC6)
+    val Neutral = Color(0xFFBDBDC4)
+    val RollHub = Color(0xFFD8D8DE)
+    val LedConnecting = Color(0xFFFFB300)
+    val LedPrinting = Color(0xFF2F80ED)
+    val PrinterBody = Color(0xFFE7E7ED)
+    val PrinterLid = Color(0xFFCFCFD8)
 }
 
 val AppColorScheme: ColorScheme = lightColorScheme(

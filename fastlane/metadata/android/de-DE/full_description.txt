@@ -1,4 +1,4 @@
-<p><b>NiimStudio</b> ist ein freier Open-Source-Etiketten-Designer für NIIMBOT-Etikettendrucker. Kabelfahnen, Lager-Etiketten und Preisschilder am Handy gestalten und per Bluetooth drucken – ohne Konto, ohne Cloud, ohne Werbung.</p>
+<p><b>NiimStudio</b> ist ein freier Open-Source-Etiketten-Designer für NIIMBOT-Etikettendrucker. Kabelfahnen, Lager-Etiketten und Preisschilder am Handy gestalten und per Bluetooth drucken – ohne Konto, ohne Werbung.</p>
 
 <p><b>Funktionen</b></p>
 <ul>
@@ -8,7 +8,7 @@
 <li><b>Kabel-Etiketten:</b> 17 Steckersymbole (USB, HDMI, DisplayPort, RJ45, DC …) und Kabelfahnen, die beidseitig bedruckt um das Kabel gelegt werden.</li>
 <li><b>Profile und Vorlagen:</b> editierbare Etikettengrößen, Layouts als Vorlage mit Vorschaubild speichern.</li>
 <li><b>Serien drucken:</b> Platzhalter aus einer Liste oder CSV füllen oder Etiketten automatisch nummerieren.</li>
-<li><b>Privat:</b> läuft komplett offline und fordert nicht einmal die Internet-Berechtigung an.</li>
+<li><b>Privat:</b> Bearbeiten und Drucken funktionieren offline. Eine optionale Katalogabfrage ermittelt Farbe und Typ der Rolle aus dem öffentlichen NIIMBOT-Katalog – gesendet wird nur die SKU; die automatische Abfrage ist abschaltbar.</li>
 <li><b>Druckerstatus auf einen Blick:</b> Modell, Akkustand (4 Balken) und Bluetooth-Status in einem antippbaren Kopfbereich, mit Firmware- und Verbindungsdetails.</li>
 <li>Deutsch, Englisch und Russisch.</li>
 </ul>

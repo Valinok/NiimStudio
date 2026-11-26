@@ -77,6 +77,6 @@ fun OriginalLabelsDialog(roll: LabelRoll?, catalog: CloudRoll? = null, onDismiss
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } },
     )
 }

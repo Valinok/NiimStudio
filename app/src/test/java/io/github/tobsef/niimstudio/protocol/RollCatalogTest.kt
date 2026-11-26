@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class RollCatalogTest {
 
@@ -70,5 +71,24 @@ class RollCatalogTest {
         val roll = RollCatalog.parse("""{"code":1,"data":{"name":"x","names":[{"languageCode":"ru","name":"Синий"}]}}""")
         assertEquals("Синий", roll.nameFor("ru"))
         assertEquals(CloudRollColor.BLUE, roll.color)
+    }
+
+    @Test
+    fun compoundColourNamesUseTheLastMentionedColour() {
+        assertEquals(CloudRollColor.BLACK, CloudRollColor.from(listOf("красный-чёрный")))
+        assertEquals(CloudRollColor.BLUE, CloudRollColor.from(listOf("透明蓝线缆")))
+        assertEquals(CloudRollColor.RED, CloudRollColor.from(listOf("T12*40 white-red")))
+    }
+
+    @Test
+    fun languageCodesUseRootLocale() {
+        val original = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale("tr", "TR"))
+            val roll = CloudRoll(labelNames = listOf(CloudName(languageCode = "id", name = "Etiket")))
+            assertEquals("Etiket", roll.nameFor("ID"))
+        } finally {
+            Locale.setDefault(original)
+        }
     }
 }

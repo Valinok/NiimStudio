@@ -20,16 +20,16 @@ import kotlin.math.min
 
 /** Swatch for a colour inferred from the catalogue name (there is no colour field in the chip). */
 fun cloudSwatch(color: CloudRollColor): Color = when (color) {
-    CloudRollColor.YELLOW -> Color(0xFFF2C230)
-    CloudRollColor.GREEN -> Color(0xFF4CAF7A)
-    CloudRollColor.WHITE -> Color(0xFFF2F2F2)
-    CloudRollColor.BLUE -> Color(0xFF3D7BD6)
-    CloudRollColor.RED -> Color(0xFFD9534F)
-    CloudRollColor.BLACK -> Color(0xFF424242)
-    CloudRollColor.SILVER -> Color(0xFFBFC3C9)
-    CloudRollColor.TRANSPARENT -> Color(0xFFBFE3F2)
-    CloudRollColor.PEARL -> Color(0xFFE8DCC6)
-    CloudRollColor.UNKNOWN -> Color(0xFFBDBDC4)
+    CloudRollColor.YELLOW -> AppColors.RollYellow
+    CloudRollColor.GREEN -> AppColors.RollGreen
+    CloudRollColor.WHITE -> AppColors.RollWhite
+    CloudRollColor.BLUE -> AppColors.RollBlue
+    CloudRollColor.RED -> AppColors.RollRed
+    CloudRollColor.BLACK -> AppColors.RollBlack
+    CloudRollColor.SILVER -> AppColors.RollSilver
+    CloudRollColor.TRANSPARENT -> AppColors.RollTransparent
+    CloudRollColor.PEARL -> AppColors.RollPearl
+    CloudRollColor.UNKNOWN -> AppColors.Neutral
 }
 
 /**
@@ -40,14 +40,14 @@ fun cloudSwatch(color: CloudRollColor): Color = when (color) {
 fun rollColor(roll: LabelRoll?, catalog: CloudRoll? = null): Color {
     if (catalog != null && catalog.color != CloudRollColor.UNKNOWN) return cloudSwatch(catalog.color)
     return when {
-        roll == null -> Color(0xFFBDBDC4)
-        roll.paperType == "PC0FB213" || roll.barcode == "6972842743824" -> Color(0xFFF2C230) // yellow cable labels
-        roll.paperType == "PC0FC113" || roll.barcode == "6972842743800" -> Color(0xFF4CAF7A) // green labels
-        roll.paperType == "PZ1G4173" || roll.barcode == "01222281" -> Color(0xFFF2F2F2) // white labels
-        roll.type == 5 || roll.type == 13 || roll.type == 19 || roll.type == 22 -> Color(0xFFBFE3F2) // clear PET/PE/thermal
-        roll.type == 8 -> Color(0xFFBFC3C9) // silver PET
-        roll.type == 15 -> Color(0xFFE8DCC6) // pearlescent film
-        else -> Color(0xFFF2F2F2)
+        roll == null -> AppColors.Neutral
+        roll.paperType == "PC0FB213" || roll.barcode == "6972842743824" -> AppColors.RollYellow // yellow cable labels
+        roll.paperType == "PC0FC113" || roll.barcode == "6972842743800" -> AppColors.RollGreen // green labels
+        roll.paperType == "PZ1G4173" || roll.barcode == "01222281" -> AppColors.RollWhite // white labels
+        roll.type == 5 || roll.type == 13 || roll.type == 19 || roll.type == 22 -> AppColors.RollTransparent // clear PET/PE/thermal
+        roll.type == 8 -> AppColors.RollSilver // silver PET
+        roll.type == 15 -> AppColors.RollPearl // pearlescent film
+        else -> AppColors.RollWhite
     }
 }
 
@@ -119,7 +119,7 @@ fun LabelRollImage(roll: LabelRoll?, modifier: Modifier = Modifier, catalog: Clo
                         strokeWidth = 1.5f,
                     )
 
-                    drawCircle(color = Color(0xFFD8D8DE), radius = r + 3f, center = center)
+                    drawCircle(color = AppColors.RollHub, radius = r + 3f, center = center)
                     drawCircle(color = tint, radius = r, center = center)
                     drawCircle(color = Color.White, radius = r * 0.34f, center = center)
 

@@ -341,10 +341,6 @@
         <item quantity="one">%d Etikett</item>
         <item quantity="other">%d Etiketten</item>
     </plurals>
-    <plurals name="label_remaining">
-        <item quantity="one">%d Etikett übrig</item>
-        <item quantity="other">%d Etiketten übrig</item>
-    </plurals>
     <plurals name="print_total">
         <item quantity="one">Gesamt: %d Etikett</item>
         <item quantity="other">Gesamt: %d Etiketten</item>

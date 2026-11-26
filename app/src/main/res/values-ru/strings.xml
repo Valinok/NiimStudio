@@ -344,12 +344,6 @@
         <item quantity="many">%d этикеток</item>
         <item quantity="other">%d этикетки</item>
     </plurals>
-    <plurals name="label_remaining">
-        <item quantity="one">%d этикетка осталась</item>
-        <item quantity="few">%d этикетки осталось</item>
-        <item quantity="many">%d этикеток осталось</item>
-        <item quantity="other">%d этикетки осталось</item>
-    </plurals>
     <plurals name="print_total">
         <item quantity="one">Всего: %d этикетка</item>
         <item quantity="few">Всего: %d этикетки</item>

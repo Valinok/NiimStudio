@@ -126,8 +126,9 @@ object PrinterError {
         0x09 to "Printer busy", 0x0A to "No print head", 0x0B to "Temperature low", 0x0C to "Print head loose",
         0x0D to "No ribbon", 0x0E to "Wrong ribbon", 0x0F to "Used ribbon", 0x10 to "Wrong paper",
         0x11 to "Set paper fail", 0x12 to "Set print mode fail", 0x13 to "Set density fail",
-        0x14 to "Write RFID fail", 0x1D to "RFID tag not written", 0x22 to "RFID writing not supported",
-        0x16 to "Communication exception", 0x32 to "Illegal page", 0x33 to "Illegal ribbon page",
+        0x14 to "Write RFID fail", 0x16 to "Communication exception",
+        0x1D to "RFID tag not written", 0x22 to "RFID writing not supported",
+        0x32 to "Illegal page", 0x33 to "Illegal ribbon page",
         0x34 to "Receive data timeout", 0x35 to "Non-dedicated ribbon",
     )
 

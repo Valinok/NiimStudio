@@ -7,6 +7,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.tobsef.niimstudio.transport.Transport
+import kotlinx.coroutines.runBlocking
 
 class ProtocolTest {
 
@@ -217,5 +219,76 @@ class ProtocolTest {
         assertFalse(OriginalLabels.isD110m(OriginalLabels.PVC_TAG))
         assertTrue(OriginalLabels.isKnown(OriginalLabels.HEAT_SHRINK_TUBE))
         assertFalse(OriginalLabels.isKnown(99))
+    }
+
+    @Test
+    fun rfidParserRejectsUnexpectedTail() {
+        val base = hex("00 11 22 33 44 55 66 77") + byteArrayOf(0, 0) + hex("00 4E 00 00 01")
+        assertNotNull(LabelRoll.parse(base))
+        assertNull(LabelRoll.parse(base + byteArrayOf(0)))                 // 1 stray byte
+        assertNull(LabelRoll.parse(base + hex("00 C8 00")))                // partial capacity
+        assertNull(LabelRoll.parse(base + hex("00 C8 00 00")))             // garbage after capacity
+    }
+
+    @Test
+    fun rfidSerialOfExactlyEightCharsIsNotSplit() {
+        val d = hex("00 11 22 33 44 55 66 77") + byteArrayOf(0, 8) +
+            "12345678".toByteArray(Charsets.US_ASCII) + hex("00 32 00 32 03")
+        val roll = LabelRoll.parse(d)!!
+        assertEquals("12345678", roll.serial)
+        assertNull(roll.paperType)
+        assertEquals("12345678", roll.serialNumber)
+    }
+
+    @Test
+    fun heartbeatStatusAcceptsExactlySevenBytes() {
+        val s = PrinterStatus.parse(byteArrayOf(0x0F, 0xE2.toByte(), 0x04, 0x4A, 0, 1, 1))
+        assertNotNull(s)
+        assertEquals(4, s!!.battery)
+        assertEquals(true, s.lidClosed)
+        assertEquals(false, s.paperInserted)
+        assertEquals(true, s.rfidOk)
+    }
+
+    @Test
+    fun printerErrorNamesIncludeRfidCodesInNumericOrder() {
+        assertEquals("Write RFID fail", PrinterError.name(0x14))
+        assertEquals("Communication exception", PrinterError.name(0x16))
+        assertEquals("RFID tag not written", PrinterError.name(0x1D))
+        assertEquals("RFID writing not supported", PrinterError.name(0x22))
+    }
+
+    private class FakeTransport : Transport {
+        override val name = "fake"
+        var onData: ((ByteArray) -> Unit)? = null
+        var reply: ByteArray = byteArrayOf()
+        val writes = mutableListOf<ByteArray>()
+
+        override suspend fun open(onData: (ByteArray) -> Unit, onClosed: (Throwable?) -> Unit) {
+            this.onData = onData
+        }
+
+        override suspend fun write(bytes: ByteArray) {
+            writes += bytes.copyOf()
+            onData?.invoke(reply)
+        }
+
+        override fun close() = Unit
+    }
+
+    @Test
+    fun getRollRequestsRfidInfoAndParsesReply() = runBlocking {
+        val payload = hex("00 11 22 33 44 55 66 77") + byteArrayOf(0, 0) + hex("00 4E 00 00 01")
+        val transport = FakeTransport().apply { reply = NiimbotPacket(Rsp.RFID_INFO, payload).toBytes() }
+        val logs = mutableListOf<String>()
+        val client = NiimbotClient(transport) { logs += it }
+        client.connect { }
+
+        val roll = client.getRoll()
+        assertNotNull(roll)
+        assertEquals(78, roll!!.total)
+        assertArrayEquals(hex("55 55 1A 01 01 1A AA AA"), transport.writes.single())
+        assertTrue(logs.any { it.startsWith("RX 1B [redacted") })
+        assertFalse(logs.any { it.contains("0011223344556677") })
     }
 }

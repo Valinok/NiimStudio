@@ -342,10 +342,6 @@
         <item quantity="one">%d label</item>
         <item quantity="other">%d labels</item>
     </plurals>
-    <plurals name="label_remaining">
-        <item quantity="one">%d label left</item>
-        <item quantity="other">%d labels left</item>
-    </plurals>
     <plurals name="print_total">
         <item quantity="one">Total: %d label</item>
         <item quantity="other">Total: %d labels</item>

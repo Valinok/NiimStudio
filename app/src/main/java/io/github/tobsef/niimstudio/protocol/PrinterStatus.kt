@@ -9,23 +9,21 @@ package io.github.tobsef.niimstudio.protocol
  * the caller simply keeps the last known status.
  */
 data class PrinterStatus(
-    val battery: Int?,
-    val lidClosed: Boolean?,
-    val paperInserted: Boolean?,
-    val rfidOk: Boolean?,
+    val battery: Int,
+    val lidClosed: Boolean,
+    val paperInserted: Boolean,
+    val rfidOk: Boolean,
 ) {
     companion object {
+        /** A payload shorter than 7 bytes is not a status frame; all fields are guaranteed here. */
         fun parse(data: ByteArray): PrinterStatus? {
             if (data.size < 7) return null
-
-            fun setFlag(index: Int): Boolean? = data.getOrNull(index)?.let { it.toInt() != 0 }
-
             return PrinterStatus(
                 battery = data[2].toInt() and 0xFF,
                 // 0 = closed / paper present, any other value = open / missing.
-                lidClosed = setFlag(4)?.not(),
-                paperInserted = setFlag(5)?.not(),
-                rfidOk = setFlag(6),
+                lidClosed = data[4].toInt() == 0,
+                paperInserted = data[5].toInt() == 0,
+                rfidOk = data[6].toInt() != 0,
             )
         }
     }

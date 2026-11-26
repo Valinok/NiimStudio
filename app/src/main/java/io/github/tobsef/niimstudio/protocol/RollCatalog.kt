@@ -49,9 +49,9 @@ data class CloudRoll(
         get() = CloudRollColor.from(listOfNotNull(name) + localizedNames.mapNotNull { it.name })
 
     fun nameFor(language: String): String? {
-        val lang = language.lowercase()
-        return localizedNames.firstOrNull { it.languageCode?.lowercase() == lang }?.name
-            ?: localizedNames.firstOrNull { it.languageCode?.lowercase()?.startsWith(lang) == true }?.name
+        val lang = language.lowercase(Locale.ROOT)
+        return localizedNames.firstOrNull { it.languageCode?.lowercase(Locale.ROOT) == lang }?.name
+            ?: localizedNames.firstOrNull { it.languageCode?.lowercase(Locale.ROOT)?.startsWith(lang) == true }?.name
             ?: name
     }
 }
@@ -67,29 +67,33 @@ enum class CloudRollColor {
     YELLOW, GREEN, WHITE, BLUE, RED, BLACK, SILVER, TRANSPARENT, PEARL, UNKNOWN;
 
     companion object {
+        private val keywords = listOf(
+            "黄" to YELLOW, "黃" to YELLOW, "yellow" to YELLOW, "huang" to YELLOW,
+            "gelb" to YELLOW, "жёлтый" to YELLOW, "желтый" to YELLOW,
+            "绿" to GREEN, "綠" to GREEN, "green" to GREEN, "grün" to GREEN,
+            "gruen" to GREEN, "зелёный" to GREEN, "зеленый" to GREEN,
+            "白" to WHITE, "white" to WHITE, "bai" to WHITE,
+            "weiß" to WHITE, "weiss" to WHITE, "белый" to WHITE,
+            "蓝" to BLUE, "藍" to BLUE, "blue" to BLUE, "blau" to BLUE, "синий" to BLUE,
+            "红" to RED, "紅" to RED, "red" to RED, "rot" to RED, "красный" to RED,
+            "黑" to BLACK, "black" to BLACK, "hei" to BLACK, "schwarz" to BLACK,
+            "чёрный" to BLACK, "черный" to BLACK,
+            "银" to SILVER, "銀" to SILVER, "silver" to SILVER, "silber" to SILVER,
+            "серебр" to SILVER,
+            "透明" to TRANSPARENT, "transparent" to TRANSPARENT, "clear" to TRANSPARENT,
+            "прозрач" to TRANSPARENT,
+            "珠光" to PEARL, "pearl" to PEARL, "perlglanz" to PEARL,
+            "perlmutt" to PEARL, "перламутр" to PEARL,
+        )
+
         fun from(names: List<String>): CloudRollColor {
             val text = names.joinToString(" ").lowercase(Locale.ROOT)
-            return when {
-                "黄" in text || "黃" in text || "yellow" in text || "huang" in text ||
-                    "gelb" in text || "жёлтый" in text || "желтый" in text -> YELLOW
-                "绿" in text || "綠" in text || "green" in text || "grün" in text ||
-                    "gruen" in text || "зелёный" in text || "зеленый" in text -> GREEN
-                "白" in text || "white" in text || "bai" in text ||
-                    "weiß" in text || "weiss" in text || "белый" in text -> WHITE
-                "蓝" in text || "藍" in text || "blue" in text || "blau" in text ||
-                    "синий" in text -> BLUE
-                "红" in text || "紅" in text || "red" in text || "rot" in text ||
-                    "красный" in text -> RED
-                "黑" in text || "black" in text || "hei" in text || "schwarz" in text ||
-                    "чёрный" in text || "черный" in text -> BLACK
-                "银" in text || "銀" in text || "silver" in text || "silber" in text ||
-                    "серебр" in text -> SILVER
-                "透明" in text || "transparent" in text || "clear" in text ||
-                    "прозрач" in text -> TRANSPARENT
-                "珠光" in text || "pearl" in text || "perlglanz" in text ||
-                    "perlmutt" in text || "перламутр" in text -> PEARL
-                else -> UNKNOWN
-            }
+            // A compound name can mention several colours ("красный-чёрный", "透明蓝").
+            // The rightmost keyword is the dominant one; a fixed when-order would
+            // incorrectly report the first colour from the list instead.
+            return keywords.mapNotNull { (word, color) ->
+                text.indexOf(word).takeIf { it >= 0 }?.let { it to color }
+            }.maxByOrNull { it.first }?.second ?: UNKNOWN
         }
     }
 }

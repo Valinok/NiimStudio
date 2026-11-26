@@ -1,0 +1,1 @@
+0.7.5: Strengere RFID-Nutzlastprüfung, nicht-nullbarer Druckerstatus, bessere Katalogfarben- und Sprachauflösung, Regressionstests mit Fake-Transport, benannte Rollenfarben und korrigierte Store-Beschreibungen.
