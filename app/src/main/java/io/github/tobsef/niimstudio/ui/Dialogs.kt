@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -30,15 +31,12 @@ import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +60,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import io.github.tobsef.niimstudio.data.Store
 import io.github.tobsef.niimstudio.model.DataMode
@@ -144,7 +144,6 @@ fun WifiDialog(onDismiss: () -> Unit, onOk: (String) -> Unit) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () -> Unit) {
     val ctx = LocalContext.current
@@ -175,17 +174,21 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
         }
     }
 
-    ModalBottomSheet(
+    // A plain bottom-anchored dialog: ModalBottomSheet changes its anchors when the counter
+    // fields make the content taller than half the screen, so the sheet used to open away from
+    // the bottom edge. Here the bottom edge is always pinned to the screen bottom.
+    Dialog(
         onDismissRequest = { if (progress == null) onDismiss() },
-        modifier = Modifier.automationIds(),
-        // Counter mode adds an extra field and hint, so the sheet can be taller than half the
-        // screen. With skipPartiallyExpanded = true Material 3 then opens it fully expanded (at
-        // the top of the screen) until the first drag recalculates the anchors. Let it open at
-        // PartiallyExpanded instead; short sheets are unaffected and still open at content height.
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
-        containerColor = Color.White,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        Column(
+            Modifier.automationIds()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .padding(horizontal = 20.dp),
+        ) {
             Text(stringResource(R.string.print_title), fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
             Text("${profileName(doc.profile)} · ${doc.profile.sizeLabel}", color = AppColors.TextGrey, fontSize = 13.sp)
 
@@ -311,6 +314,7 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                     }
                 }
             }
+        }
         }
     }
 }
