@@ -1,0 +1,1 @@
+0.7.13: Das Druckfenster springt beim ersten Öffnen nicht mehr, weil die doppelte Navigationsbalken-Polsterung entfernt wurde; die Höhe ist sofort stabil.
