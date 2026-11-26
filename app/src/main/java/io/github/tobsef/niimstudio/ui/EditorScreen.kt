@@ -41,7 +41,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -183,8 +183,8 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             }
             if (vm.inlineEditId != null) {
                 // Between the label dropdown and its size/name info, clear of the canvas.
-                Button(onClick = { vm.endInlineEdit() }, modifier = Modifier.height(34.dp).padding(end = 8.dp)) {
-                    Text(stringResource(R.string.done), fontSize = 13.sp)
+                OutlinedButton(onClick = { vm.endInlineEdit() }, modifier = Modifier.padding(end = 8.dp)) {
+                    Text(stringResource(R.string.done), maxLines = 1)
                 }
             }
             Icon(Icons.Outlined.Info, null, Modifier.size(20.dp), tint = Color(0xFF666666))

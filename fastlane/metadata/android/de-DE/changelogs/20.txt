@@ -1,0 +1,1 @@
+0.7.12: Die Schaltfläche „Fertig“ sieht jetzt wie „Lesen“ aus; unter „Lesen“ erscheinen Katalognamen, Farbe und Größe statt einer abgeschnittenen Zeile.

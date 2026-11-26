@@ -1,0 +1,1 @@
+0.7.12: Style the inline edit Done button like the catalogue Read button and show full catalogue name, colour and size under Read instead of one truncated line.

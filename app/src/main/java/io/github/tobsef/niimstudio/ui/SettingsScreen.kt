@@ -337,7 +337,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                 catalogMessage?.let {
                     Text(
                         it, fontSize = 11.sp, color = AppColors.TextGrey,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        maxLines = 3, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
@@ -490,12 +490,18 @@ private suspend fun readCatalog(ctx: android.content.Context): String {
                 "sceneTags=${c.sceneTags}",
         )
         buildString {
+            append(ctx.getString(R.string.catalog_name, c.nameFor(L10n.locale().language) ?: c.name ?: "—"))
+            append('\n')
             append(ctx.getString(R.string.catalog_color)).append(": ")
             append(ctx.getString(cloudColorRes(c.color)))
             // Cable is a cloud property; keep the word and length, drop the yes/no value.
             if (c.cable) {
                 append(" · ").append(ctx.getString(R.string.catalog_cable))
                 c.cableLength?.let { append(" (").append(it).append(" mm)") }
+            }
+            val size = listOfNotNull(c.width, c.height).joinToString(" × ")
+            if (size.isNotEmpty()) {
+                append('\n').append(ctx.getString(R.string.catalog_size)).append(": ").append(size).append(" mm")
             }
         }
     } catch (e: Exception) {
