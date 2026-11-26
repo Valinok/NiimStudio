@@ -23,13 +23,10 @@ permissions:
 
 env:
   # SHA-256 of the release signing certificate – the build fails if the APK is signed with another key.
-  SIGNING_CERT_SHA256: e25da1eb1ed9f653b024b98a8648172bac6855fa01875989a83a3db4ccd949ce
+  SIGNING_CERT_SHA256: a991f1f73b85cfc665cb5798fa1e1c4d8fefd264ea093f1d531359fbffbbf1b7
 
 jobs:
   release:
-    # The upstream action needs signing secrets that are not available in this fork.
-    # Releases here are built and published manually; see README.md.
-    if: github.repository == 'TobseF/NiimStudio'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
