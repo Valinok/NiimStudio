@@ -178,7 +178,11 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
     ModalBottomSheet(
         onDismissRequest = { if (progress == null) onDismiss() },
         modifier = Modifier.automationIds(),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        // Counter mode adds an extra field and hint, so the sheet can be taller than half the
+        // screen. With skipPartiallyExpanded = true Material 3 then opens it fully expanded (at
+        // the top of the screen) until the first drag recalculates the anchors. Let it open at
+        // PartiallyExpanded instead; short sheets are unaffected and still open at content height.
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
         containerColor = Color.White,
     ) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
