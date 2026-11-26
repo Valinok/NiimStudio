@@ -89,13 +89,23 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
                     size = Size(lidWidth, lidHeight),
                     cornerRadius = radius,
                 )
+                // Dark latch across the lid near its right edge, rotating with the lid.
+                drawRoundRect(
+                    color = AppColors.LidLatch,
+                    topLeft = Offset(lidLeft + lidWidth * 0.86f, lidTop + lidHeight * 0.12f),
+                    size = Size(w * 0.05f, lidHeight * 0.76f),
+                    cornerRadius = CornerRadius(2f, 2f),
+                )
             }
-            // Four evenly spaced vertical slots on the front panel.
+            // Four full-height facets of the original case, evenly spaced.
+            val bodyTop = bodyHeight * 0.26f
+            val barInset = bodyHeight * 0.02f
+            val barTop = bodyTop + barInset
+            val barBottom = bodyHeight - barInset
+            val barHeight = barBottom - barTop
             val barWidth = w * 0.07f
-            val barHeight = bodyHeight * 0.12f
             val gap = w * 0.08f
             val firstLeft = (w - (4 * barWidth + 3 * gap)) / 2f
-            val barTop = bodyHeight * 0.78f
             repeat(4) { i ->
                 drawRoundRect(
                     color = Color.White,
@@ -104,11 +114,11 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
                     cornerRadius = CornerRadius(2f, 2f),
                 )
             }
-            // LED sits in the centre of the body, not of the canvas with its lid reserve.
+            // LED on the top layer, in the geometric centre of the body.
             drawCircle(
                 color = color.copy(alpha = alpha),
                 radius = minOf(w, bodyHeight) * 0.10f,
-                center = Offset(w / 2f, bodyHeight * 0.63f),
+                center = Offset(w / 2f, (bodyTop + bodyHeight) / 2f),
             )
         }
     }

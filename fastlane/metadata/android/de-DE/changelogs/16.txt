@@ -1,0 +1,1 @@
+0.7.8: Gehäusefacetten über die volle Höhe, LED in der Körpermitte auf der obersten Ebene und dunkler Deckelriegel am rechten Rand.

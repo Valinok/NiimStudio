@@ -101,6 +101,7 @@ object AppColors {
     val LedPrinting = Color(0xFF2F80ED)
     val PrinterBody = Color(0xFFE7E7ED)
     val PrinterLid = Color(0xFFCFCFD8)
+    val LidLatch = Color(0xFF707078)
 }
 
 val AppColorScheme: ColorScheme = lightColorScheme(
