@@ -59,51 +59,50 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
 
     Canvas(modifier = modifier) {
         val w = size.width
-        val h = size.height
+        val topReserve = 22.dp.toPx()
+        val bodyHeight = size.height - topReserve
         val radius = CornerRadius(8f, 8f)
 
-        // The open lid rotates about the left-bottom hinge; its far end rises above the body.
-        // Reserve that space permanently inside the canvas so status texts never move.
-        translate(0f, 20.dp.toPx()) {
-
-        // Body.
-        drawRoundRect(
-            color = AppColors.PrinterBody,
-            topLeft = Offset(0f, h * 0.26f),
-            size = Size(w, h * 0.74f),
-            cornerRadius = CornerRadius(10f, 10f),
-        )
-        // Lid: hinged at the left edge. Opening lifts only the right side by 30°;
-        // the hinge point stays in place, so the printer itself does not move.
-        val lidLeft = w * 0.06f
-        val lidTop = h * 0.17f
-        val lidWidth = w * 0.88f
-        val lidHeight = h * 0.24f
-        rotate(
-            degrees = if (lidOpen) -30f else 0f,
-            pivot = Offset(lidLeft, lidTop + lidHeight), // lower point of the left edge
-        ) {
+        // The open lid hinges on the left edge and rises above the body. The reserve
+        // stays inside the canvas, so the drawing cannot spill onto the buttons below.
+        translate(0f, topReserve) {
+            // Body.
             drawRoundRect(
-                color = AppColors.PrinterLid,
-                topLeft = Offset(lidLeft, lidTop),
-                size = Size(lidWidth, lidHeight),
-                cornerRadius = radius,
+                color = AppColors.PrinterBody,
+                topLeft = Offset(0f, bodyHeight * 0.26f),
+                size = Size(w, bodyHeight * 0.74f),
+                cornerRadius = CornerRadius(10f, 10f),
             )
-        }
-        // Paper slot.
-        drawRoundRect(
-            color = Color.White,
-            topLeft = Offset(w * 0.24f, h * 0.63f),
-            size = Size(w * 0.52f, h * 0.12f),
-            cornerRadius = CornerRadius(3f, 3f),
-        )
-        // LED: twice the previous radius, centred on the printer.
-        drawCircle(
-            color = color.copy(alpha = alpha),
-            radius = minOf(w, h) * 0.10f,
-            center = Offset(w / 2f, h / 2f),
-        )
-
+            // Lid: hinged at the left edge. Opening lifts only the right side by 30°;
+            // the hinge point stays in place, so the printer itself does not move.
+            val lidLeft = w * 0.06f
+            val lidTop = bodyHeight * 0.17f
+            val lidWidth = w * 0.88f
+            val lidHeight = bodyHeight * 0.24f
+            rotate(
+                degrees = if (lidOpen) -30f else 0f,
+                pivot = Offset(lidLeft, lidTop + lidHeight), // lower point of the left edge
+            ) {
+                drawRoundRect(
+                    color = AppColors.PrinterLid,
+                    topLeft = Offset(lidLeft, lidTop),
+                    size = Size(lidWidth, lidHeight),
+                    cornerRadius = radius,
+                )
+            }
+            // Paper slot.
+            drawRoundRect(
+                color = Color.White,
+                topLeft = Offset(w * 0.24f, bodyHeight * 0.63f),
+                size = Size(w * 0.52f, bodyHeight * 0.12f),
+                cornerRadius = CornerRadius(3f, 3f),
+            )
+            // LED: twice the previous radius, centred on the printer.
+            drawCircle(
+                color = color.copy(alpha = alpha),
+                radius = minOf(w, bodyHeight) * 0.10f,
+                center = Offset(w / 2f, bodyHeight / 2f),
+            )
         }
     }
 }

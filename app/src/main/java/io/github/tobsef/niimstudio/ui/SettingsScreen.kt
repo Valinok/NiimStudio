@@ -218,7 +218,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenProfiles: () -> Unit, onOpenLog: ()
                     }
                     if (conn is ConnState.Connecting) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)) {
                     Button(
                         onClick = { if (PrinterManager.hasPermissions(ctx)) scanOpen = true else requestPermissions() },
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.Accent),
