@@ -48,8 +48,8 @@ android {
         applicationId = "io.github.tobsef.niimstudio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 22
-        versionName = "0.7.14"
+        versionCode = 23
+        versionName = "0.7.15"
         buildConfigField("String", "LANGUAGES", "\"${appLanguages.joinToString(",")}\"")
     }
 

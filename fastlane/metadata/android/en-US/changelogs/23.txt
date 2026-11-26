@@ -1,0 +1,1 @@
+0.7.15: Properly cap the profile dropdown to the measured width of its field, so long names no longer make the menu extend past the Done button.

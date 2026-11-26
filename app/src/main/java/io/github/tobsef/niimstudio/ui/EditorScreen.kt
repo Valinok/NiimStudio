@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,6 +76,7 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
     val profiles by Store.profiles.collectAsState()
     val settings by Store.settings.collectAsState()
     var profileMenu by remember { mutableStateOf(false) }
+    var profileAnchorWidth by remember { mutableStateOf(0.dp) }
     var printerMenu by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
     var confirmNew by remember { mutableStateOf(false) }
@@ -152,7 +153,7 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             Modifier.fillMaxWidth().height(44.dp).background(Color.White).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BoxWithConstraints(Modifier.weight(1f)) {
+            Box(Modifier.weight(1f).onSizeChanged { profileAnchorWidth = with(density) { it.width.toDp() } }) {
                 Row(Modifier.clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically) {
                     Text(profileName(vm.doc.profile), fontSize = 16.sp, color = Color(0xFF333333), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Icon(Icons.Filled.KeyboardArrowDown, null, tint = Color(0xFF666666))
@@ -160,7 +161,7 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
                 DropdownMenu(
                     expanded = profileMenu,
                     onDismissRequest = { profileMenu = false },
-                    modifier = Modifier.widthIn(max = maxWidth),
+                    modifier = if (profileAnchorWidth > 0.dp) Modifier.widthIn(max = profileAnchorWidth) else Modifier,
                 ) {
                     for (p in profiles) {
                         DropdownMenuItem(
