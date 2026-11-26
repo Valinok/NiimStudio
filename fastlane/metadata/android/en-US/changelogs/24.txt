@@ -1,1 +1,0 @@
-0.7.16: Restore the original profile bar: remove the custom Done button and the dropdown width experiments; finish inline editing with Back as upstream does.

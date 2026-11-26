@@ -1,1 +1,0 @@
-0.7.13: Fix the print sheet jumping on first open by removing duplicate navigation-bar padding; its height is now stable immediately.

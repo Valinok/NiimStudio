@@ -1,1 +1,0 @@
-0.7.10: Die Schaltfläche „Fertig“ der Texteingabe ist jetzt in der oberen Leiste und überdeckt das Etikett nicht mehr.

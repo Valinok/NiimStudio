@@ -1,1 +1,0 @@
-0.7.15: Das Profil-Dropdown wird jetzt auf die tatsächlich gemessene Feldbreite begrenzt, damit lange Namen das Menü nicht mehr über die Schaltfläche „Fertig“ hinausziehen.

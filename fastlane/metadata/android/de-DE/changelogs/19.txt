@@ -1,1 +1,0 @@
-0.7.11: Die Schaltfläche „Fertig“ der Texteingabe steht jetzt zwischen Etikett-Auswahl und Etikett-Informationen statt in der oberen Werkzeugleiste.

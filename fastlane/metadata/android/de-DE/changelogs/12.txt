@@ -1,1 +1,0 @@
-0.7.4: compileSdk 35 für reproduzierbare F-Droid-/CI-Builds wiederhergestellt, dynamisch referenzierte Ressourcen behalten und Tag-UUID/Seriennummer aus Protokollen entfernt.

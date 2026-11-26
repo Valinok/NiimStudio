@@ -1,1 +1,0 @@
-0.7.6: Keep the printer illustration inside its canvas and add spacing before the connection buttons.

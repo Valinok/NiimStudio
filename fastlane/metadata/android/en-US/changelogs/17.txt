@@ -1,1 +1,0 @@
-0.7.9: Double the width of the four case facets and space them evenly across the body; make the lid full body width and flush with the body when closed.

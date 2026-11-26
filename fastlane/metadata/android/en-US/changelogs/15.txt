@@ -1,1 +1,0 @@
-0.7.7: Printer illustration now has four evenly spaced vertical slots and the LED is centred on the body.

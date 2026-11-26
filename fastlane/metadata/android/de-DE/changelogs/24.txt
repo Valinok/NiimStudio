@@ -1,1 +1,0 @@
-0.7.16: Profilzeile wieder wie im Original: eigener „Fertig“-Button und Dropdown-Breitenexperimente entfernt; Bearbeitung wird wie upstream mit Zurück beendet.

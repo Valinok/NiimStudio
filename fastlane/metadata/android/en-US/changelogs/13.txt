@@ -1,1 +1,0 @@
-0.7.5: Stricter RFID payload validation, non-null printer status flags, better catalogue colour/language parsing, fake-transport regression tests, named roll colours and corrected store descriptions.
