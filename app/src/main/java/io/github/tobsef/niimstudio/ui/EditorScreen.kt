@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
@@ -42,7 +41,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -55,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,7 +73,6 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
     val profiles by Store.profiles.collectAsState()
     val settings by Store.settings.collectAsState()
     var profileMenu by remember { mutableStateOf(false) }
-    var profileAnchorWidth by remember { mutableStateOf(0.dp) }
     var printerMenu by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
     var confirmNew by remember { mutableStateOf(false) }
@@ -153,26 +149,17 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             Modifier.fillMaxWidth().height(44.dp).background(Color.White).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.weight(1f).onSizeChanged { profileAnchorWidth = with(density) { it.width.toDp() } }) {
+            Box(Modifier.weight(1f)) {
                 Row(Modifier.clickable { profileMenu = true }, verticalAlignment = Alignment.CenterVertically) {
                     Text(profileName(vm.doc.profile), fontSize = 16.sp, color = Color(0xFF333333), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Icon(Icons.Filled.KeyboardArrowDown, null, tint = Color(0xFF666666))
                 }
-                DropdownMenu(
-                    expanded = profileMenu,
-                    onDismissRequest = { profileMenu = false },
-                    modifier = if (profileAnchorWidth > 0.dp) Modifier.widthIn(max = profileAnchorWidth) else Modifier,
-                ) {
+                DropdownMenu(profileMenu, { profileMenu = false }) {
                     for (p in profiles) {
                         DropdownMenuItem(
                             text = {
                                 Column {
-                                    Text(
-                                        profileName(p),
-                                        fontWeight = if (p.id == vm.doc.profile.id) FontWeight.SemiBold else FontWeight.Normal,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Text(profileName(p), fontWeight = if (p.id == vm.doc.profile.id) FontWeight.SemiBold else FontWeight.Normal)
                                     Text(p.sizeLabel, fontSize = 12.sp, color = AppColors.TextGrey)
                                 }
                             },
@@ -191,12 +178,6 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
                         leadingIcon = { Icon(Icons.Filled.Add, null) },
                         onClick = { profileMenu = false; onOpenProfiles() },
                     )
-                }
-            }
-            if (vm.inlineEditId != null) {
-                // Between the label dropdown and its size/name info, clear of the canvas.
-                OutlinedButton(onClick = { vm.endInlineEdit() }, modifier = Modifier.padding(end = 8.dp)) {
-                    Text(stringResource(R.string.done), maxLines = 1)
                 }
             }
             Icon(Icons.Outlined.Info, null, Modifier.size(20.dp), tint = Color(0xFF666666))
