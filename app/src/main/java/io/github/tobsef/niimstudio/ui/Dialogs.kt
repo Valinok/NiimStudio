@@ -10,14 +10,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,12 +30,15 @@ import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,8 +62,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import io.github.tobsef.niimstudio.data.Store
 import io.github.tobsef.niimstudio.model.DataMode
@@ -145,6 +144,7 @@ fun WifiDialog(onDismiss: () -> Unit, onOk: (String) -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () -> Unit) {
     val ctx = LocalContext.current
@@ -175,23 +175,22 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
         }
     }
 
-    // A plain bottom-anchored dialog: ModalBottomSheet changes its anchors when the counter
-    // fields make the content taller than half the screen, so the sheet used to open away from
-    // the bottom edge. Here the bottom edge is always pinned to the screen bottom.
-    Dialog(
+    ModalBottomSheet(
         onDismissRequest = { if (progress == null) onDismiss() },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.automationIds(),
+        // skipPartiallyExpanded keeps the Expanded anchor at the bottom edge: the sheet is never
+        // left half-open with the editor buttons visible below it. The preview now has a fixed
+        // height, so the anchor does not move when the rendered bitmap replaces the placeholder.
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Color.White,
     ) {
-        BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Column(
-            Modifier.automationIds()
-                .fillMaxWidth()
-                // Keep the panel within the screen; with bottom alignment this shows the title
-                // first and lets long counter content scroll instead of hiding above the screen.
-                .heightIn(max = maxHeight)
+            Modifier.fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 20.dp)
+                // ModalBottomSheet already applies safeDrawing bottom insets. Add a small visible
+                // gap so the buttons are not flush with the navigation bar.
+                .padding(bottom = 8.dp),
         ) {
             Text(stringResource(R.string.print_title), fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
             Text("${profileName(doc.profile)} · ${doc.profile.sizeLabel}", color = AppColors.TextGrey, fontSize = 13.sp)
@@ -201,7 +200,7 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                 contentAlignment = Alignment.Center,
             ) {
                 // Fixed preview box: the placeholder and the rendered bitmap take the same
-                // space, so opening the dialog does not shift the top edge when the render lands.
+                // space, so opening the sheet does not shift its top edge when the render lands.
                 Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
                     preview?.let {
                         Image(
@@ -322,7 +321,6 @@ fun PrintSheet(vm: EditorViewModel, onDismiss: () -> Unit, onOpenSettings: () ->
                     }
                 }
             }
-        }
         }
     }
 }
