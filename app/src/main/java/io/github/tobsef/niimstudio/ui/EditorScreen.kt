@@ -97,19 +97,11 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
             IconButton(onClick = vm::undo, enabled = vm.canUndo) { Icon(Icons.AutoMirrored.Outlined.Undo, stringResource(R.string.undo), Modifier.size(28.dp)) }
             IconButton(onClick = vm::redo, enabled = vm.canRedo) { Icon(Icons.AutoMirrored.Outlined.Redo, stringResource(R.string.redo), Modifier.size(28.dp)) }
             Spacer(Modifier.weight(1f))
-            if (vm.inlineEditId != null) {
-                // Keep "Done" in the top bar while typing: a floating button used to
-                // sit on top of the label and its "double tap to edit" hint.
-                Button(onClick = { vm.endInlineEdit() }, modifier = Modifier.height(40.dp)) {
-                    Text(stringResource(R.string.done))
-                }
-            } else {
-                IconButton(onClick = { confirmClear = true }, Modifier.testTag("clear_all"), enabled = vm.doc.elements.isNotEmpty()) {
-                    Icon(Icons.Outlined.CleaningServices, stringResource(R.string.clear_all), Modifier.size(28.dp))
-                }
-                IconButton(onClick = vm::togglePortrait) { Icon(Icons.Outlined.ScreenRotation, stringResource(R.string.rotate_label), Modifier.size(28.dp)) }
-                IconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, stringResource(R.string.settings), Modifier.size(28.dp)) }
+            IconButton(onClick = { confirmClear = true }, Modifier.testTag("clear_all"), enabled = vm.doc.elements.isNotEmpty()) {
+                Icon(Icons.Outlined.CleaningServices, stringResource(R.string.clear_all), Modifier.size(28.dp))
             }
+            IconButton(onClick = vm::togglePortrait) { Icon(Icons.Outlined.ScreenRotation, stringResource(R.string.rotate_label), Modifier.size(28.dp)) }
+            IconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, stringResource(R.string.settings), Modifier.size(28.dp)) }
             Box {
                 val connected = conn as? ConnState.Connected
                 val (icon, tint) = when (conn) {
@@ -187,6 +179,12 @@ fun EditorScreen(vm: EditorViewModel, onOpenSettings: () -> Unit, onOpenProfiles
                         leadingIcon = { Icon(Icons.Filled.Add, null) },
                         onClick = { profileMenu = false; onOpenProfiles() },
                     )
+                }
+            }
+            if (vm.inlineEditId != null) {
+                // Between the label dropdown and its size/name info, clear of the canvas.
+                Button(onClick = { vm.endInlineEdit() }, modifier = Modifier.height(34.dp).padding(end = 8.dp)) {
+                    Text(stringResource(R.string.done), fontSize = 13.sp)
                 }
             }
             Icon(Icons.Outlined.Info, null, Modifier.size(20.dp), tint = Color(0xFF666666))

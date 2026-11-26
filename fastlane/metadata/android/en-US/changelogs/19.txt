@@ -1,0 +1,1 @@
+0.7.11: Place the inline edit Done button between the label dropdown and the label info instead of in the top toolbar.
