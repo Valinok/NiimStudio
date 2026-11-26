@@ -59,8 +59,10 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
 
     Canvas(modifier = modifier) {
         val w = size.width
-        val topReserve = 22.dp.toPx()
+        // A full-width lid rotated by 30° needs more headroom than a narrow one.
+        val topReserve = 36.dp.toPx()
         val bodyHeight = size.height - topReserve
+        val bodyTop = bodyHeight * 0.26f
         val radius = CornerRadius(8f, 8f)
 
         // The open lid hinges on the left edge and rises above the body. The reserve
@@ -69,16 +71,16 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
             // Body.
             drawRoundRect(
                 color = AppColors.PrinterBody,
-                topLeft = Offset(0f, bodyHeight * 0.26f),
-                size = Size(w, bodyHeight * 0.74f),
+                topLeft = Offset(0f, bodyTop),
+                size = Size(w, bodyHeight - bodyTop),
                 cornerRadius = CornerRadius(10f, 10f),
             )
-            // Lid: hinged at the left edge. Opening lifts only the right side by 30°;
-            // the hinge point stays in place, so the printer itself does not move.
-            val lidLeft = w * 0.06f
-            val lidTop = bodyHeight * 0.17f
-            val lidWidth = w * 0.88f
+            // Lid: same width as the body and flush with its top edge when closed.
+            // Opening lifts the right side by 30° around the lower-left hinge.
+            val lidLeft = 0f
+            val lidWidth = w
             val lidHeight = bodyHeight * 0.24f
+            val lidTop = bodyTop - lidHeight
             rotate(
                 degrees = if (lidOpen) -30f else 0f,
                 pivot = Offset(lidLeft, lidTop + lidHeight), // lower point of the left edge
@@ -92,24 +94,21 @@ fun PrinterStatusImage(status: PrinterStatus?, led: LedState, modifier: Modifier
                 // Dark latch across the lid near its right edge, rotating with the lid.
                 drawRoundRect(
                     color = AppColors.LidLatch,
-                    topLeft = Offset(lidLeft + lidWidth * 0.86f, lidTop + lidHeight * 0.12f),
+                    topLeft = Offset(lidLeft + lidWidth * 0.88f, lidTop + lidHeight * 0.12f),
                     size = Size(w * 0.05f, lidHeight * 0.76f),
                     cornerRadius = CornerRadius(2f, 2f),
                 )
             }
-            // Four full-height facets of the original case, evenly spaced.
-            val bodyTop = bodyHeight * 0.26f
+            // Four full-height facets, twice as wide and spread evenly over the body width.
             val barInset = bodyHeight * 0.02f
             val barTop = bodyTop + barInset
-            val barBottom = bodyHeight - barInset
-            val barHeight = barBottom - barTop
-            val barWidth = w * 0.07f
-            val gap = w * 0.08f
-            val firstLeft = (w - (4 * barWidth + 3 * gap)) / 2f
+            val barHeight = bodyHeight - barInset - barTop
+            val barWidth = w * 0.14f
+            val gap = (w - 4 * barWidth) / 5f
             repeat(4) { i ->
                 drawRoundRect(
                     color = Color.White,
-                    topLeft = Offset(firstLeft + i * (barWidth + gap), barTop),
+                    topLeft = Offset(gap + i * (barWidth + gap), barTop),
                     size = Size(barWidth, barHeight),
                     cornerRadius = CornerRadius(2f, 2f),
                 )

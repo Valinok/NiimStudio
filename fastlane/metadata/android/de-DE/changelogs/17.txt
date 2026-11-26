@@ -1,0 +1,1 @@
+0.7.9: Die vier Gehäusefaceten doppelt so breit und gleichmäßig über die Gehäusebreite verteilt; der Deckel ist gehäusebreit und im geschlossenen Zustand bündig.
